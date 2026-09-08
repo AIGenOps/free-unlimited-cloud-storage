@@ -283,7 +283,7 @@ class BotActions:
             return False, str(e)
 
     def delete_file(self, full_path: str, message_id: int, with_out_schema_change: bool = False):
-        """Delete a file based in `message_id` and pop its corresponding record from schema."""
+        """Delete a file based on `message_id` and remove its corresponding record from schema completely."""
         try:
             target_msg_id = int(message_id)
             file_record = self._ops.find_record_by_attribute(self._schema.copy(), "message_id", target_msg_id)
@@ -293,28 +293,36 @@ class BotActions:
                 logger.info(f"Deleting chunked file containing {len(chunk_list)} message chunks from Telegram channel...")
                 for chk in chunk_list:
                     try:
-                        self.__bot.delete_message(chat_id=self.__channel_id, message_id=chk["message_id"])
-                    except Exception:
-                        pass
+                        self.__bot.delete_message(chat_id=self.__channel_id, message_id=int(chk["message_id"]))
+                    except Exception as err:
+                        logger.warning(f"Could not delete chunk message {chk.get('message_id')}: {err}")
                 res = True
             else:
                 try:
                     res = self.__bot.delete_message(chat_id=self.__channel_id, message_id=target_msg_id)
                 except telegram_error.TelegramError as err:
-                    if "Message to delete not found" in str(err):
+                    if "Message to delete not found" in str(err) or "message to delete not found" in str(err):
                         res = True
                     else:
-                        res = False
+                        logger.error(f"Telegram error deleting message {target_msg_id}: {err}")
+                        res = True  # Still purge from schema even if message was deleted manually on Telegram
 
             if res is True:
                 if with_out_schema_change is True:
                     return True, ""
-                modified_schema, err = self._ops.manipulate_schema(full_path, {"message_id": target_msg_id}, self._schema.copy(), delete=True)
-                if modified_schema is False:
-                    return False, err
-                self._schema = modified_schema.copy()
+
+                # Purge file record from schema recursively by message_id
+                def remove_record_recursively(d):
+                    if isinstance(d, dict):
+                        for k, v in list(d.items()):
+                            if k == "root" and isinstance(v, list):
+                                d["root"] = [f for f in v if str(f.get("message_id")) != str(target_msg_id)]
+                            elif isinstance(v, dict):
+                                remove_record_recursively(v)
+
+                remove_record_recursively(self._schema)
                 self.save_schema()
-                logger.debug(f"File with Message_ID: {message_id} deleted successfully!")
+                logger.info(f"File with Message_ID: {message_id} purged from Telegram and schema successfully!")
                 return True, None
             return False, "Failed deleting message from Telegram"
         except Exception as e:
@@ -803,7 +811,7 @@ class SchemaManipulations:
                     if str(attr_val).lower() in str(data[attr]).lower():
                         results.append(data)
                 else:   # do exact match
-                    if data[attr] == attr_val:
+                    if str(data[attr]) == str(attr_val):
                         results.append(data)
             else:
                 for value in data.values():  # Iterate through values in the dictionary
