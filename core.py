@@ -43,9 +43,9 @@ class BotActions:
         if schema_filepath is None:  # If none, use default, else use user-defined path. This will be used for doing multiple backups using cli. Or for testing purposes.
             self._schema_filepath = './schema/schema.json'   # This folder must be pointed to a named volume for schema persistence.
         self._cache_folder = "./cache/"  # This folder holds recently downloaded files from telegram.
+        self._ops = SchemaManipulations()
         self._schema: dict[str, list[dict[str, str|int]] | dict[str, str|int]] = self.load_or_reload_schema()
         self.save_schema()  # SAVE SCHEMA ONCE At start
-        self._ops = SchemaManipulations()
         self.VALIDATION_ACTIVE = False
         self._default_upload_directory = ""
         logger.info("Required config variables are read from env!")
@@ -131,12 +131,13 @@ class BotActions:
                             file_list.remove(file_info)
                             continue
                     meta["total_size"] += cloud_file.file_size
-                    file_list[pos]["size"] = size(cloud_file.file_size)     # save in KB / MB string.
+                    file_list[pos]["size"] = self._format_size_human(cloud_file.file_size)
+                    file_list[pos]["raw_size_bytes"] = cloud_file.file_size
                     time.sleep(1)   # small delay to avoid DDOS scenario.
 
             process_schema(self._schema, meta)
             self._schema["meta"]["last_validated"] = str(datetime.utcnow())
-            self._schema["meta"]["total_size"] = size(meta["total_size"])
+            self._schema["meta"]["total_size"] = self._format_size_human(meta["total_size"])
             self.save_schema()
             logger.info("Schema Validation completed successfully!!")
             self.VALIDATION_ACTIVE = False
@@ -501,6 +502,70 @@ class BotActions:
             logger.error(f"Error during channel auto-sync: {e}")
             return False, str(e)
 
+    @staticmethod
+    def _parse_size_string(raw_str: str) -> int:
+        """Parse size strings such as '42M', '526K', '1.5 MB', '1024 B', '79MB' into exact byte integers."""
+        if not raw_str or str(raw_str).strip().lower() in ("unknown", "none", "null", ""):
+            return 0
+        import re
+        clean_str = str(raw_str).strip()
+        match = re.search(r'([0-9]+(?:\.[0-9]+)?)\s*([A-Za-z]*)', clean_str)
+        if not match:
+            return 0
+        try:
+            val = float(match.group(1))
+            unit = match.group(2).upper()
+            multipliers = {
+                "": 1,
+                "B": 1,
+                "K": 1024,
+                "KB": 1024,
+                "M": 1024**2,
+                "MB": 1024**2,
+                "G": 1024**3,
+                "GB": 1024**3,
+                "T": 1024**4,
+                "TB": 1024**4,
+            }
+            mult = multipliers.get(unit, 1)
+            return int(val * mult)
+        except Exception:
+            return 0
+
+    def _parse_file_size_bytes(self, file_info: dict) -> int:
+        """Extract exact integer bytes from a file record in schema."""
+        if not isinstance(file_info, dict):
+            return 0
+        raw_bytes = file_info.get("raw_size_bytes")
+        if isinstance(raw_bytes, (int, float)) and raw_bytes > 0:
+            return int(raw_bytes)
+        if file_info.get("is_chunked") and isinstance(file_info.get("chunks"), list):
+            chunk_sum = 0
+            for chk in file_info["chunks"]:
+                if isinstance(chk, dict):
+                    cb = chk.get("raw_size_bytes")
+                    if isinstance(cb, (int, float)) and cb > 0:
+                        chunk_sum += int(cb)
+                    else:
+                        chunk_sum += self._parse_size_string(str(chk.get("size", "0")))
+            if chunk_sum > 0:
+                return chunk_sum
+        return self._parse_size_string(str(file_info.get("size", "0")))
+
+    @staticmethod
+    def _format_size_human(num_bytes: int) -> str:
+        """Format raw byte integers into human readable string (e.g. 43.01 MB)."""
+        if num_bytes <= 0:
+            return "0 KB"
+        val = float(num_bytes)
+        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+            if val < 1024.0:
+                if unit == 'B':
+                    return f"{int(val)} B"
+                return f"{val:.2f} {unit}"
+            val /= 1024.0
+        return f"{val:.2f} PB"
+
     def get_storage_analytics(self):
         """Return aggregated storage metrics, category breakdown, and top largest files."""
         try:
@@ -532,17 +597,7 @@ class BotActions:
                 fname = file_info.get("filename", "")
                 ext = fname.split('.')[-1].lower() if '.' in fname else ""
                 
-                raw_size_str = str(file_info.get("size", "0 KB"))
-                num_bytes = 0
-                try:
-                    parts = raw_size_str.split()
-                    val = float(parts[0])
-                    unit = parts[1].upper() if len(parts) > 1 else "B"
-                    multipliers = {"B": 1, "KB": 1024, "MB": 1024**2, "GB": 1024**3}
-                    num_bytes = int(val * multipliers.get(unit, 1))
-                except Exception:
-                    num_bytes = 0
-                    
+                num_bytes = self._parse_file_size_bytes(file_info)
                 total_bytes += num_bytes
                 
                 cat_found = "other"
@@ -552,9 +607,13 @@ class BotActions:
                         break
                 categories[cat_found] += num_bytes
                 
+                size_display = file_info.get("size")
+                if not size_display or size_display in ("Unknown", "0 KB"):
+                    size_display = self._format_size_human(num_bytes)
+                    
                 parsed_files.append({
                     "filename": fname,
-                    "size": file_info.get("size", "Unknown"),
+                    "size": size_display,
                     "bytes": num_bytes,
                     "file_id": file_info.get("file_id", ""),
                     "message_id": file_info.get("message_id", 0)
@@ -576,7 +635,7 @@ class BotActions:
                 "total_files": len(file_list),
                 "total_folders": folder_count,
                 "total_size_bytes": total_bytes,
-                "total_size_formatted": size(total_bytes) if total_bytes > 0 else "0 KB",
+                "total_size_formatted": self._format_size_human(total_bytes),
                 "categories_bytes": categories,
                 "top_largest": top_largest
             }
