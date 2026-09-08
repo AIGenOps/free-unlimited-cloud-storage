@@ -1,13 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#4f46e5">
-    <title>Telegram Cloud</title>
-    <link rel="icon" href="/static/icons/cloud-fill.svg" type="image/svg type">
+    <title>Telegram Cloud Drive</title>
+    <link rel="icon" href="/static/icons/cloud-fill.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/theme.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -17,810 +14,476 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
-
 </head>
 <body>
-    <!-- Have to migrate all icons to a single pack and use i tags for better loading time. -->
-    <!-- Display folder at top, set that as a link, it should list files, folders inside selected folder. -->
-    {% include 'navbar.html' %}
-    {% if results %}
-        <br>
-        <div class="container mt-5">
-            <div class="alert alert-primary"><h3> Search results: </h3></div>
-            <table class="table table-hover table-striped table-light">
-                <thead>
-                    <th scope="col">Filename</th>
-                    <th scope="col">Size</th>
-                    <th scope="col">Actions</th>
-                </thead>
-                <tbody>
-                    {% for result in results %}
-                        <tr>
-                            <td><img src="/static/icons/file-earmark.svg" alt=""> {{ result.filename }}</td>
-                            <td>{{ result.size }}</td>
-                            <td>
-                                <a href="{{ url_for('file_download', file_id=result.file_id) }}" class="btn btn-outline-primary">Download</a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-    <!-- The below block is not rendered in case search results is present -->
-    <div class="container mt-4">
-    <!-- Metrics Bar -->
-    <div class="row mb-4" data-tour="metrics">
-        <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Subfolders in current location (Total {{ total_folders_system }} across system catalog)">
-                <div class="metric-icon icon-purple"><i data-lucide="folder"></i></div>
-                <div>
-                    <small class="text-muted d-block">Subfolders</small>
-                    <span class="fs-5 fw-bold">{{ folders | length }}</span>
-                    <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_folders_system }} overall)</small>
+    <div class="drive-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="drive-sidebar">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-4 px-2">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <i data-lucide="cloud" style="width: 22px; height: 22px;"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-primary">Telegram Cloud</h6>
+                        <small class="text-muted" style="font-size: 0.72rem;">Encrypted Drive V1.0</small>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Files in current location (Total {{ total_files_system }} across system catalog)">
-                <div class="metric-icon icon-blue"><i data-lucide="file-text"></i></div>
-                <div>
-                    <small class="text-muted d-block">Files Here</small>
-                    <span class="fs-5 fw-bold">{{ files | length }}</span>
-                    <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_files_system }} overall)</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Real-time live storage space consumed by all files in your Telegram Channel">
-                <div class="metric-icon icon-green"><i data-lucide="hard-drive"></i></div>
-                <div>
-                    <small class="text-muted d-block">Storage Consumed</small>
-                    <span class="fs-6 fw-bold text-success">{{ total_size if total_size else '0 KB' }}</span>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3" onclick="openAnalyticsModal()" style="cursor: pointer;" data-toggle="tooltip" data-bs-toggle="tooltip" title="Open storage visualizer pie chart, category breakdown, & duplicate file scanner">
-                <div class="metric-icon icon-cyan"><i data-lucide="pie-chart"></i></div>
-                <div>
-                    <small class="text-muted d-block">Analytics & Tools</small>
-                    <span class="fs-6 fw-bold text-primary">Open Dashboard &rarr;</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Drag & Drop Uploader -->
-    <div id="drop-zone" class="dropzone-custom mb-4" data-tour="upload-zone" data-toggle="tooltip" data-bs-toggle="tooltip" title="Drag & drop single or multiple files here to upload with live NDJSON streaming progress">
-
-        <p class="mb-1 fw-bold"><i data-lucide="upload-cloud" style="width: 28px; height: 28px; vertical-align: middle;" class="text-primary me-2"></i> <b>Drag & Drop files here</b> or click to upload</p>
-        <small class="text-muted">Target Directory: <code>{{ working_directory if working_directory else 'Root (/)' }}</code></small>
-        <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
-            <input type="file" name="upload_file" id="uf" multiple style="display: none;" />
-            <input type="hidden" name="target_directory" id="uploadDirectory" value="{{ working_directory }}"/>
-        </form>
-        <div class="progress mt-3" id="upload-progress-container" style="display: none; height: 25px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="upload-progress-bar" role="progressbar" style="width: 0%;">0%</div>
-        </div>
-        <div id="upload-queue-container" class="mt-3 text-start" style="display: none;"></div>
-    </div>
-
-    {% if security_warning %}    <!-- Only show when there is a warning, a marquee with danger level is displayed -->
-    <div class="alert-danger"><marquee behavior="" direction="text-left"><b>{{ security_warning }}</b></marquee></div>
-    <br>
-    {% endif %}
-    {% include 'flash.html' %}
-    
-    <!-- Path Navigator Breadcrumb & Category Filters -->
-    <div class="row mb-3 align-items-center">
-        <div class="col-md-6 mb-2 mb-md-0">
-            <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" data-toggle="tooltip" data-bs-toggle="tooltip" title="Return to Root (/) homepage"> <i data-lucide="home" style="width: 16px; height: 16px; vertical-align: middle;"></i> Home</a></li>
-                {% if working_directory != "" %}
-                    {% for path_item, path_str in directory_parts %}
-                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}?target_directory={{ path_str | urlencode }}">{{ path_item }}</a></li>
-                    {% endfor %}
-                {% endif %}
-            </ol>
-            </nav>
-        </div>
-        <div class="col-md-6 text-right" data-tour="search-bar">
-            <input type="text" id="live-search-input" class="form-control" placeholder="⚡ Live search files in directory..." data-toggle="tooltip" data-bs-toggle="tooltip" title="Type any keyword or filename to instantly filter files in real-time">
-        </div>
-    </div>
-
-    <!-- Category Filter Buttons -->
-    <div class="btn-group mb-3 d-flex flex-wrap" role="group" aria-label="Category Filters">
-        <button type="button" class="btn btn-outline-primary active category-btn" data-category="all" data-toggle="tooltip" data-bs-toggle="tooltip" title="Show all files regardless of file extension"><i data-lucide="layers" style="width: 15px; height: 15px;"></i> All</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="images" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter image files (.png, .jpg, .jpeg, .gif, .webp, .svg)"><i data-lucide="image" style="width: 15px; height: 15px;"></i> Images</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="videos" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter video files (.mp4, .mkv, .webm, .avi, .mov)"><i data-lucide="video" style="width: 15px; height: 15px;"></i> Videos</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="audio" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter audio files (.mp3, .wav, .flac, .ogg, .m4a)"><i data-lucide="music" style="width: 15px; height: 15px;"></i> Audio</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="documents" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter document files (.pdf, .doc, .docx, .txt, .json, .csv, .xlsx)"><i data-lucide="file-text" style="width: 15px; height: 15px;"></i> Documents</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="archives" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter compressed archives (.zip, .rar, .7z, .tar, .gz)"><i data-lucide="archive" style="width: 15px; height: 15px;"></i> Archives</button>
-    </div>
-
-    <!-- Desktop Table View -->
-    <div class="table-desktop-view" data-tour="files-table">
-        <table class="table table-hover table-striped table-light" id="filesTable">
-            <thead>
-                <tr>
-                    <th scope="col">Filename</th>
-                    <th scope="col">Size</th>
-                    <th scope="col">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <div class="alert alert-warning mb-2" role="alert">
-                    <b>Folders: {{ folders | length }}, Files: {{ files | length }} [ Working Directory is "{{ working_directory }}"]</b>
-                </div>
-                {% for folder in folders %}
-                <tr class="folder-row">
-                    <td colspan="2"> <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="link-primary"> <i data-lucide="folder" class="text-warning me-1"></i> {{ folder }} </a> </td>
-                    <td>
-                        <button class="move-btn btn btn-outline-primary" data-folder="{{ working_directory }}/{{ folder }}" id="moveBtn_{{ loop.index }}" data-toggle="modal" data-target="#moveModal"><i data-lucide="folder-input" style="width: 16px; height: 16px;"></i> Move</button>
-                        <form action="{{ url_for('delete_folder') }}" method="post" style="display: inline;">
-                            <input type="text" name="delete_folder" id="deleteDirectory", value="{{ working_directory }}/{{ folder }}", hidden/>
-                            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure want to delete this whole folder? \n All sub folders, files inside this directory will be permanently deleted!')"><i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Delete Folder</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% for file_info in files %}
-                    <tr class="file-row" data-filename="{{ file_info.filename | lower }}">
-                        <td><i data-lucide="file-text" class="text-primary me-1"></i> {{ file_info.filename }}</td>
-                        <td>{{ file_info.size }}</td>
-                        <td>
-                            <button class="btn btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}" data-toggle="tooltip" data-bs-toggle="tooltip" title="Stream and preview media or document directly in browser"><i data-lucide="eye" style="width: 15px; height: 15px;"></i> Preview</button>
-                            <form action="{{ url_for('share_file') }}" method="post" style="display: inline;">
-                                <input type="text" name="file_id", value="{{ file_info.file_id }}", hidden/>
-                                <button type="submit" class="btn btn-outline-info" onclick="return confirm('Are you sure want to share this file?')" data-toggle="tooltip" data-bs-toggle="tooltip" title="Generate a public download link (expires in 100 mins)"><i data-lucide="share-2" style="width: 15px; height: 15px;"></i> Share</button>
-                            </form>
-                            <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-outline-primary" data-toggle="tooltip" data-bs-toggle="tooltip" title="Download file directly from your encrypted Telegram cloud channel"><i data-lucide="download" style="width: 15px; height: 15px;"></i> Download</a>
-                            <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" style="display: inline;">
-                                <input type="text" name="target_directory" id="deleteFromDirectory", value="{{ working_directory }}", hidden/>
-                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure want to delete this file?')" data-toggle="tooltip" data-bs-toggle="tooltip" title="Permanently delete file from Telegram storage channel"><i data-lucide="trash-2" style="width: 15px; height: 15px;"></i> Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Mobile Touch Cards View -->
-    <div class="mobile-cards-view mb-4" style="display: none;">
-        <div class="alert alert-warning py-2 small mb-3">
-            <b>Folders: {{ folders | length }}, Files: {{ files | length }}</b>
-        </div>
-        {% for folder in folders %}
-            <div class="card mb-2 shadow-sm border-0 rounded-3 folder-row">
-                <div class="card-body p-3 d-flex justify-content-between align-items-center">
-                    <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="text-decoration-none text-dark fw-bold text-truncate me-2" style="max-width: 60%;">
-                        <i data-lucide="folder" class="text-warning me-1"></i> {{ folder }}
+                <nav class="nav flex-column">
+                    <a href="{{ url_for('index') }}" class="sidebar-nav-link active">
+                        <i data-lucide="hard-drive" style="width: 18px;"></i>
+                        <span>My Drive</span>
                     </a>
-                    <div class="d-flex gap-1">
-                        <button class="btn btn-sm btn-outline-primary move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-toggle="modal" data-target="#moveModal">Move</button>
+                    <button class="sidebar-nav-link border-0 text-start bg-transparent" onclick="openAnalyticsModal()">
+                        <i data-lucide="pie-chart" style="width: 18px;"></i>
+                        <span>Analytics & Tools</span>
+                    </button>
+                    <button class="sidebar-nav-link border-0 text-start bg-transparent" onclick="triggerAutoSync()">
+                        <i data-lucide="refresh-cw" style="width: 18px;"></i>
+                        <span>Auto-Sync</span>
+                    </button>
+                    <button class="sidebar-nav-link border-0 text-start bg-transparent" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                        <i data-lucide="settings" style="width: 18px;"></i>
+                        <span>
+                            {% if current_user and current_user.is_admin %}
+                                Admin Settings
+                            {% else %}
+                                Settings
+                            {% endif %}
+                        </span>
+                    </button>
+                </nav>
+            </div>
+
+            <div>
+                <!-- Storage Quota Widget -->
+                <div class="card p-3 border-0 bg-dark bg-opacity-25 rounded-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted fw-semibold">Storage</small>
+                        <small class="fw-bold text-success">{{ total_size }}</small>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" style="width: 35%;"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block" style="font-size: 0.7rem;">Unlimited Telegram Cloud</small>
+                </div>
+
+                <!-- Theme Switcher Button -->
+                <button class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-2 mb-2" id="mainThemeBtn" onclick="toggleMainTheme()">
+                    <i data-lucide="moon" id="mainThemeIcon" style="width: 16px;"></i>
+                    <span id="mainThemeText">Dark Theme</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="drive-content">
+            <!-- Top Navbar Bar -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <!-- Search & Directory Path -->
+                <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 500px;">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark bg-opacity-25 border-end-0 text-muted"><i data-lucide="search" style="width: 18px;"></i></span>
+                        <input type="text" id="live-search-input" class="form-control border-start-0 ps-0" placeholder="⚡ Search files in Drive...">
+                    </div>
+                </div>
+
+                <!-- View Switcher & Action Controls -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Layout Toggle (Grid vs List) -->
+                    <div class="btn-group" role="group" aria-label="Layout Switcher">
+                        <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnViewGrid" onclick="switchView('grid')" title="Grid View">
+                            <i data-lucide="grid" style="width: 16px;"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnViewList" onclick="switchView('list')" title="List View">
+                            <i data-lucide="list" style="width: 16px;"></i>
+                        </button>
+                    </div>
+
+                    <button class="btn btn-primary btn-sm fw-semibold d-flex align-items-center gap-1" onclick="document.getElementById('uf').click()">
+                        <i data-lucide="plus" style="width: 18px;"></i> Upload
+                    </button>
+
+                    <!-- User Profile Pill -->
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i data-lucide="user" style="width: 16px;"></i>
+                            <span>{{ current_user.username if current_user else 'user' }}</span>
+                            {% if current_user and current_user.is_admin %}
+                                <span class="badge bg-purple text-white" style="font-size: 0.65rem;">Admin</span>
+                            {% else %}
+                                <span class="badge bg-info text-dark" style="font-size: 0.65rem;">User</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#settingsModal"><i data-lucide="settings" class="me-2" style="width: 15px;"></i> Settings</button></li>
+                            <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#infoModal"><i data-lucide="info" class="me-2" style="width: 15px;"></i> System Capabilities</button></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item small text-danger" href="{{ url_for('logout') }}" onclick="return confirm('Log out from drive?')"><i data-lucide="log-out" class="me-2" style="width: 15px;"></i> Log Out</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% if security_warning %}
+            <div class="alert alert-danger py-2 mb-3"><marquee behavior="" direction="text-left"><b>{{ security_warning }}</b></marquee></div>
+            {% endif %}
+            {% include 'flash.html' %}
+
+            <!-- Quick Metrics Cards -->
+            <div class="row g-3 mb-4" data-tour="metrics">
+                <div class="col-md-3 col-6">
+                    <div class="metric-card d-flex align-items-center gap-3">
+                        <div class="metric-icon icon-purple"><i data-lucide="folder"></i></div>
+                        <div>
+                            <small class="text-muted d-block">Subfolders</small>
+                            <span class="fs-5 fw-bold">{{ folders | length }}</span>
+                            <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_folders_system }} total)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="metric-card d-flex align-items-center gap-3">
+                        <div class="metric-icon icon-blue"><i data-lucide="file-text"></i></div>
+                        <div>
+                            <small class="text-muted d-block">Files Here</small>
+                            <span class="fs-5 fw-bold">{{ files | length }}</span>
+                            <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_files_system }} total)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="metric-card d-flex align-items-center gap-3">
+                        <div class="metric-icon icon-green"><i data-lucide="hard-drive"></i></div>
+                        <div>
+                            <small class="text-muted d-block">Storage Consumed</small>
+                            <span class="fs-6 fw-bold text-success">{{ total_size }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-6">
+                    <div class="metric-card d-flex align-items-center gap-3" onclick="openAnalyticsModal()" style="cursor: pointer;">
+                        <div class="metric-icon icon-cyan"><i data-lucide="pie-chart"></i></div>
+                        <div>
+                            <small class="text-muted d-block">Analytics</small>
+                            <span class="fs-6 fw-bold text-primary">View Stats &rarr;</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Drag & Drop Upload Zone -->
+            <div id="drop-zone" class="dropzone-custom mb-4" data-tour="upload-zone">
+                <p class="mb-1 fw-bold"><i data-lucide="upload-cloud" style="width: 28px; height: 28px; vertical-align: middle;" class="text-primary me-2"></i> <b>Drag & Drop files here</b> or click to upload</p>
+                <small class="text-muted">Target Directory: <code>{{ working_directory if working_directory else 'Root (/)' }}</code></small>
+                <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                    <input type="file" name="upload_file" id="uf" multiple style="display: none;" />
+                    <input type="hidden" name="target_directory" id="uploadDirectory" value="{{ working_directory }}"/>
+                </form>
+                <div class="progress mt-3" id="upload-progress-container" style="display: none; height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="upload-progress-bar" role="progressbar" style="width: 0%;">0%</div>
+                </div>
+            </div>
+
+            <!-- Breadcrumbs & Category Filter Pills -->
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i data-lucide="home" style="width: 15px; vertical-align: text-bottom;"></i> Home</a></li>
+                        {% if working_directory != "" %}
+                            {% for path_item, path_str in directory_parts %}
+                                <li class="breadcrumb-item"><a href="{{ url_for('index') }}?target_directory={{ path_str | urlencode }}">{{ path_item }}</a></li>
+                            {% endfor %}
+                        {% endif %}
+                    </ol>
+                </nav>
+
+                <div class="btn-group flex-wrap" role="group" aria-label="Category Filters">
+                    <button type="button" class="btn btn-outline-primary btn-sm active category-btn" data-category="all">All</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="images">Images</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="videos">Videos</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="audio">Audio</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="documents">Documents</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="archives">Archives</button>
+                </div>
+            </div>
+
+            <!-- VIEW MODE 1: GRID VIEW (Default) -->
+            <div id="driveGridView" class="drive-grid-container mb-4">
+                <!-- Folder Cards -->
+                {% for folder in folders %}
+                <div class="drive-card folder-row">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <i data-lucide="folder" class="text-warning" style="width: 32px; height: 32px;"></i>
+                        <div class="text-truncate">
+                            <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none text-reset text-truncate d-block">{{ folder }}</a>
+                            <small class="text-muted d-block">Directory</small>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary w-100 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
                         <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
                             <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')"><i data-lucide="trash-2" style="width: 14px;"></i></button>
                         </form>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+                {% endfor %}
 
-        {% for file_info in files %}
-            <div class="card mb-2 shadow-sm border-0 rounded-3 file-row" data-filename="{{ file_info.filename | lower }}">
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="fw-bold text-dark text-break pe-2">
-                            <i data-lucide="file-text" class="text-primary me-1" style="width: 16px; height: 16px;"></i> {{ file_info.filename }}
+                <!-- File Cards -->
+                {% for file_info in files %}
+                <div class="drive-card file-row" data-filename="{{ file_info.filename | lower }}">
+                    <div>
+                        <div class="drive-card-preview">
+                            <i data-lucide="file-text" class="text-primary" style="width: 48px; height: 48px;"></i>
                         </div>
-                        <span class="badge bg-light text-dark border">{{ file_info.size }}</span>
+                        <h6 class="fw-bold text-truncate mb-1" title="{{ file_info.filename }}">{{ file_info.filename }}</h6>
+                        <small class="badge bg-secondary mb-3">{{ file_info.size }}</small>
                     </div>
-                    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
-                        <button class="btn btn-sm btn-info text-white preview-btn flex-grow-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px; height: 14px;"></i> Preview</button>
-                        <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-primary flex-grow-1"><i data-lucide="download" style="width: 14px; height: 14px;"></i> Download</a>
+                    <div class="d-flex flex-wrap gap-1">
+                        <button class="btn btn-sm btn-info text-white preview-btn flex-grow-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px;"></i></button>
+                        <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-primary flex-grow-1"><i data-lucide="download" style="width: 14px;"></i></a>
                         <form action="{{ url_for('share_file') }}" method="post" class="d-inline">
                             <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px; height: 14px;"></i> Share</button>
+                            <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px;"></i></button>
                         </form>
                         <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline">
                             <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px;"></i></button>
                         </form>
                     </div>
                 </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    </div>
 
-    </div>
-
-    <!-- Mobile Bottom Navigation Bar -->
-    <nav class="mobile-bottom-nav">
-        <a href="{{ url_for('index') }}" class="mobile-nav-item active">
-            <i data-lucide="home" style="width: 20px; height: 20px;"></i>
-            <span>Home</span>
-        </a>
-        <button class="mobile-nav-item" onclick="openAnalyticsModal()">
-            <i data-lucide="bar-chart-2" style="width: 20px; height: 20px;"></i>
-            <span>Analytics</span>
-        </button>
-        <button class="mobile-nav-item" onclick="triggerAutoSync()">
-            <i data-lucide="refresh-cw" style="width: 20px; height: 20px;"></i>
-            <span>Sync</span>
-        </button>
-        <button class="mobile-nav-item" data-toggle="modal" data-target="#infoModal" data-bs-toggle="modal" data-bs-target="#infoModal">
-            <i data-lucide="info" style="width: 20px; height: 20px;"></i>
-            <span>Info</span>
-        </button>
-        <a href="/logout" class="mobile-nav-item" onclick="return confirm('Are you sure you want to logout?')">
-            <i data-lucide="log-out" style="width: 20px; height: 20px;"></i>
-            <span>Logout</span>
-        </a>
-    </nav>
-
-    <!-- Mobile Floating Action Button (FAB) -->
-    <button class="mobile-fab-upload" onclick="document.getElementById('uf').click()" title="Upload File">
-        <i data-lucide="plus" style="width: 28px; height: 28px;"></i>
-    </button>
-
-    {% if working_directory == "" %}    <!-- Only show at home page -->
-        <footer class="fixed-bottom" style="background-color: rgb(237, 219, 198);" data-tour="system-status">
-            <div class="container">
-                <div class="row align-items-center">
-                    <div class="col-md-6 text-left">
-                        <p><b>Total Space Consumed: {{ total_size }}</b></p>
-                    </div>
-                    <div class="col-md-6 text-right">
-                        <p>Schema Last Validated: {{ last_validated }} UTC</p>
-                    </div>
-                </div>
-            </div>
-        </footer>
-    {% endif %}
-
-    <!-- Media Preview Modal -->
-    <div class="modal fade" id="previewModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="previewModalTitle">File Preview</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body text-center" id="previewModalBody">
-                    <p>Loading preview...</p>
-                </div>
-                <div class="modal-footer">
-                    <a id="previewDownloadBtn" href="#" class="btn btn-primary">Download File</a>
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <!-- VIEW MODE 2: LIST VIEW -->
+            <div id="driveListView" class="table-desktop-view mb-4" style="display: none;">
+                <div class="table-responsive rounded-3 border">
+                    <table class="table table-hover align-middle mb-0" id="filesTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Name</th>
+                                <th>Size</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for folder in folders %}
+                            <tr class="folder-row">
+                                <td colspan="2">
+                                    <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none">
+                                        <i data-lucide="folder" class="text-warning me-2"></i> {{ folder }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary me-1 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
+                                    <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
+                                        <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for file_info in files %}
+                            <tr class="file-row" data-filename="{{ file_info.filename | lower }}">
+                                <td><i data-lucide="file-text" class="text-primary me-2"></i> {{ file_info.filename }}</td>
+                                <td><span class="badge bg-secondary">{{ file_info.size }}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px;"></i> Preview</button>
+                                    <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-outline-primary me-1"><i data-lucide="download" style="width: 14px;"></i> Download</a>
+                                    <form action="{{ url_for('share_file') }}" method="post" class="d-inline me-1">
+                                        <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
+                                        <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px;"></i> Share</button>
+                                    </form>
+                                    <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline">
+                                        <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px;"></i> Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
+        </main>
     </div>
 
-    <!-- Bootstrap modal for file movement -->
-    <div class="modal" id="moveModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Move Folder</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    {% include 'settings_modal.html' %}
+    {% include 'info_modal.html' %}
+
+    <!-- Move Folder Modal -->
+    <div class="modal fade" id="moveModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-secondary border-opacity-25">
+                    <h5 class="modal-title fw-bold">Move Folder</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <label for="targetFolder">Enter target folder: (Leave blank to move to root directory)</label>
-                    <input type="text" class="form-control" id="targetFolder" placeholder="Path to folder...">
+                    <label for="targetFolder" class="form-label small text-muted">Enter target folder (leave blank for Root):</label>
+                    <input type="text" class="form-control mb-3" id="targetFolder" placeholder="Path to folder...">
+
+                    <label for="newNameForMovedFolder" class="form-label small text-muted">Rename folder (optional):</label>
+                    <input type="text" class="form-control mb-3" id="newNameForMovedFolder">
+
+                    <small class="text-muted">Pro Tip: To rename in-place, enter current path as target folder and specify new name.</small>
                 </div>
-                <div class="modal-body">
-                    <label for="newNameForMovedFolder">Give a new name to folder?</label>
-                    <input type="text" class="form-control" id="newNameForMovedFolder">
-                </div>
-                <div class="modal-body">
-                    <textarea id="modal-pro-tip" class="form-control" style="min-width: 100%" readonly>Pro Tip: To rename the current folder in-place, set target folder path as current path and specify new name.</textarea>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" id="moveConfirmBtn">Move</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/static/js/move-folder-modal.js"></script>
-
-    <script>
-    // Drag & Drop Uploader Script
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('uf');
-    const uploadForm = document.getElementById('uploadForm');
-    const progressContainer = document.getElementById('upload-progress-container');
-    const progressBar = document.getElementById('upload-progress-bar');
-
-    if (dropZone && fileInput) {
-        // Prevent click recursion when fileInput is clicked inside dropZone
-        dropZone.addEventListener('click', (e) => {
-            if (e.target !== fileInput) {
-                fileInput.click();
-            }
-        });
-
-        fileInput.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.add('bg-light', 'border-primary');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dropZone.classList.remove('bg-light', 'border-primary');
-            }, false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const dt = e.dataTransfer;
-            const files = dt ? dt.files : null;
-            if (files && files.length > 0) {
-                handleUpload(files);
-            }
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files && fileInput.files.length > 0) {
-                handleUpload(fileInput.files);
-            }
-        });
-    }
-
-    function formatBytes(bytes) {
-        if (!bytes || bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    function handleUpload(files) {
-        if (!files || files.length === 0) return;
-
-        const queueContainer = document.getElementById('upload-queue-container');
-        const targetDirInput = document.getElementById('uploadDirectory');
-        const targetDir = targetDirInput ? targetDirInput.value : '';
-
-        if (!queueContainer) return;
-
-        queueContainer.style.display = 'block';
-        queueContainer.innerHTML = `<h6 class="font-weight-bold mb-2">Uploading ${files.length} File(s)...</h6>`;
-
-        for (let i = 0; i < files.length; i++) {
-            const f = files[i];
-            const itemHtml = `
-                <div class="card mb-2 shadow-sm border-0" id="upload-item-${i}">
-                    <div class="card-body p-2 px-3 bg-white rounded">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <div class="text-truncate me-2" style="max-width: 70%;">
-                                <i data-lucide="file-text" class="text-primary me-1" style="width: 16px; height: 16px; vertical-align: middle;"></i>
-                                <strong class="text-dark small">${f.name}</strong>
-                                <small class="text-muted ms-1">(${formatBytes(f.size)})</small>
-                            </div>
-                            <span class="badge bg-secondary" id="badge-${i}">Waiting</span>
-                        </div>
-                        <div class="progress" style="height: 14px;">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="pbar-${i}" role="progressbar" style="width: 0%;">0%</div>
-                        </div>
-                    </div>
+    <!-- Media Preview Modal -->
+    <div class="modal fade" id="previewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content glass-modal">
+                <div class="modal-header border-bottom border-secondary border-opacity-25">
+                    <h5 class="modal-title fw-bold" id="previewModalTitle">File Preview</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-            `;
-            queueContainer.innerHTML += itemHtml;
-        }
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-
-        let index = 0;
-
-        async function uploadNext() {
-            if (index >= files.length) {
-                setTimeout(() => window.location.reload(), 900);
-                return;
-            }
-
-            const file = files[index];
-            const badge = document.getElementById(`badge-${index}`);
-            const pbar = document.getElementById(`pbar-${index}`);
-
-            if (badge) {
-                badge.className = 'badge bg-primary';
-                badge.textContent = 'Preparing...';
-            }
-
-            const formData = new FormData();
-            formData.append('target_directory', targetDir);
-            formData.append('upload_file', file);
-
-            try {
-                const response = await fetch('/upload/', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/x-ndjson'
-                    },
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error('HTTP error ' + response.status);
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let buffer = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop();
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue;
-                        try {
-                            const data = JSON.parse(line);
-                            if (data.percent !== undefined && pbar) {
-                                pbar.style.width = data.percent + '%';
-                                pbar.textContent = data.percent + '%';
-                            }
-                            if (data.message && badge) {
-                                badge.textContent = data.message;
-                            }
-                            if (data.status === 'success') {
-                                if (pbar) {
-                                    pbar.classList.remove('bg-primary', 'progress-bar-animated');
-                                    pbar.classList.add('bg-success');
-                                    pbar.style.width = '100%';
-                                    pbar.textContent = '100%';
-                                }
-                                if (badge) {
-                                    badge.className = 'badge bg-success';
-                                    badge.textContent = 'Uploaded ✓';
-                                }
-                            } else if (data.status === 'error') {
-                                if (pbar) {
-                                    pbar.classList.remove('bg-primary', 'progress-bar-animated');
-                                    pbar.classList.add('bg-danger');
-                                    pbar.textContent = 'Error';
-                                }
-                                if (badge) {
-                                    badge.className = 'badge bg-danger';
-                                    badge.textContent = data.message || 'Failed ✗';
-                                }
-                            }
-                        } catch (err) {}
-                    }
-                }
-            } catch (err) {
-                if (pbar) {
-                    pbar.classList.remove('bg-primary', 'progress-bar-animated');
-                    pbar.classList.add('bg-danger');
-                }
-                if (badge) {
-                    badge.className = 'badge bg-danger';
-                    badge.textContent = 'Upload Error';
-                }
-            }
-
-            index++;
-            uploadNext();
-        }
-
-        uploadNext();
-    }
-
-    // Live Search & Category Filtering
-    const liveSearchInput = document.getElementById('live-search-input');
-    const categoryBtns = document.querySelectorAll('.category-btn');
-    const fileRows = document.querySelectorAll('.file-row');
-
-    let currentCategory = 'all';
-
-    const catMap = {
-        'images': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'],
-        'videos': ['mp4', 'mkv', 'webm', 'avi', 'mov'],
-        'audio': ['mp3', 'wav', 'flac', 'ogg', 'm4a'],
-        'documents': ['pdf', 'doc', 'docx', 'txt', 'json', 'csv', 'xlsx'],
-        'archives': ['zip', 'rar', '7z', 'tar', 'gz']
-    };
-
-    function filterTable() {
-        const query = liveSearchInput ? liveSearchInput.value.toLowerCase().trim() : '';
-
-        fileRows.forEach(row => {
-            const filename = row.getAttribute('data-filename') || '';
-            const ext = filename.split('.').pop().toLowerCase();
-
-            const matchesSearch = !query || filename.includes(query);
-            let matchesCategory = true;
-
-            if (currentCategory !== 'all' && catMap[currentCategory]) {
-                matchesCategory = catMap[currentCategory].includes(ext);
-            }
-
-            if (matchesSearch && matchesCategory) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
-    }
-
-    if (liveSearchInput) {
-        liveSearchInput.addEventListener('input', filterTable);
-    }
-
-    categoryBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            categoryBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            currentCategory = btn.getAttribute('data-category');
-            filterTable();
-        });
-    });
-
-    // In-Browser Media Preview Modal
-    document.querySelectorAll('.preview-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const fileId = btn.getAttribute('data-fileid');
-            const filename = btn.getAttribute('data-filename');
-            const ext = filename.split('.').pop().toLowerCase();
-
-            const modalTitle = document.getElementById('previewModalTitle');
-            const modalBody = document.getElementById('previewModalBody');
-            const downloadBtn = document.getElementById('previewDownloadBtn');
-
-            modalTitle.textContent = 'Preview: ' + filename;
-            downloadBtn.href = '/download/' + fileId;
-            modalBody.innerHTML = '<p class="text-muted">Loading preview...</p>';
-
-            const previewUrl = '/preview/' + fileId;
-
-            if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) {
-                modalBody.innerHTML = `<img src="${previewUrl}" class="img-fluid rounded" style="max-height: 500px;" alt="${filename}">`;
-            } else if (['mp4', 'webm', 'ogv'].includes(ext)) {
-                modalBody.innerHTML = `<video controls style="max-width: 100%; max-height: 500px;"><source src="${previewUrl}"></video>`;
-            } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
-                modalBody.innerHTML = `<audio controls class="w-100 mt-3"><source src="${previewUrl}"></audio>`;
-            } else if (['pdf', 'txt', 'json', 'py', 'html'].includes(ext)) {
-                modalBody.innerHTML = `<iframe src="${previewUrl}" style="width: 100%; height: 500px; border: none;"></iframe>`;
-            } else {
-                modalBody.innerHTML = `<div class="alert alert-info">Preview not available for <code>.${ext}</code> files.<br>Please download to view.</div>`;
-            }
-
-            $('#previewModal').modal('show');
-        });
-    });
-    </script>
-
-    <!-- Storage Analytics & Duplicate Cleaner Modal -->
-    <div class="modal fade" id="analyticsModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content modal-content-custom">
-                <div class="modal-header modal-header-custom">
-                    <h5 class="modal-title font-weight-bold">📊 Storage Analytics & Smart Utilities</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+                <div class="modal-body text-center" id="previewModalBody">
+                    <p>Loading preview...</p>
                 </div>
-                <div class="modal-body p-4">
-                    <div class="row mb-4">
-                        <div class="col-md-6 text-center">
-                            <h6 class="font-weight-bold mb-3">Storage Distribution by Category</h6>
-                            <div style="height: 250px; position: relative;">
-                                <canvas id="storageChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="font-weight-bold mb-3">Top Largest Files</h6>
-                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                                <table class="table table-sm table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Filename</th>
-                                            <th>Size</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="largestFilesTable">
-                                        <tr><td colspan="2" class="text-muted text-center">Loading analytics...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <hr>
-                    <div class="mt-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h6 class="font-weight-bold mb-0">🧹 Duplicate File Finder</h6>
-                            <button class="btn btn-sm btn-outline-primary" onclick="loadDuplicates()">Scan for Duplicates</button>
-                        </div>
-                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                            <table class="table table-sm table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Filename</th>
-                                        <th>Copies Count</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="duplicatesTable">
-                                    <tr><td colspan="3" class="text-muted text-center">Click "Scan for Duplicates" to check.</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <div class="modal-footer border-top border-secondary border-opacity-25">
+                    <a id="previewDownloadBtn" href="#" class="btn btn-primary">Download File</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Auto-Backup & Analytics Handlers -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-    let chartInstance = null;
+    function switchView(mode) {
+        const grid = document.getElementById('driveGridView');
+        const list = document.getElementById('driveListView');
+        const btnGrid = document.getElementById('btnViewGrid');
+        const btnList = document.getElementById('btnViewList');
 
-    function openAnalyticsModal() {
-        $('#analyticsModal').modal('show');
-        fetch('/api/analytics')
-            .then(res => res.json())
-            .then(data => {
-                const tbody = document.getElementById('largestFilesTable');
-                tbody.innerHTML = '';
-                if (data.top_largest && data.top_largest.length > 0) {
-                    data.top_largest.forEach(f => {
-                        tbody.innerHTML += `<tr><td>${f.filename}</td><td><span class="badge bg-secondary">${f.size}</span></td></tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="2" class="text-muted text-center">No files found.</td></tr>';
-                }
-
-                const ctx = document.getElementById('storageChart').getContext('2d');
-                if (chartInstance) {
-                    chartInstance.destroy();
-                }
-
-                const cat = data.categories_bytes || {};
-                const labels = ['Images', 'Videos', 'Audio', 'Documents', 'Archives', 'Other'];
-                const bytesData = [cat.images || 0, cat.videos || 0, cat.audio || 0, cat.documents || 0, cat.archives || 0, cat.other || 0];
-
-                chartInstance = new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            data: bytesData,
-                            backgroundColor: ['#3b82f6', '#7c3aed', '#10b981', '#f59e0b', '#06b6d4', '#94a3b8']
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom' }
-                        }
-                    }
-                });
-            })
-            .catch(err => alert('Failed loading analytics data.'));
-    }
-
-    function loadDuplicates() {
-        const tbody = document.getElementById('duplicatesTable');
-        tbody.innerHTML = '<tr><td colspan="3" class="text-muted text-center">Scanning schema for duplicates...</td></tr>';
-        fetch('/api/duplicates')
-            .then(res => res.json())
-            .then(data => {
-                tbody.innerHTML = '';
-                if (data.duplicates && data.duplicates.length > 0) {
-                    data.duplicates.forEach(dup => {
-                        tbody.innerHTML += `<tr><td><strong>${dup.filename}</strong></td><td><span class="badge bg-warning text-dark">${dup.count} copies</span></td><td><small class="text-muted">Duplicates detected</small></td></tr>`;
-                    });
-                } else {
-                    tbody.innerHTML = '<tr><td colspan="3" class="text-success text-center">🎉 No duplicate files found!</td></tr>';
-                }
-            })
-            .catch(err => alert('Error scanning duplicates.'));
-    }
-
-    function triggerAutoSync() {
-        if (!confirm('Run Channel Auto-Sync? This will scan recent Telegram channel messages and import un-registered files into /Telegram_Imports/.')) return;
-        fetch('/api/sync-channel', { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    alert('Auto-Sync Error: ' + data.message);
-                }
-            })
-            .catch(err => alert('Network error during auto-sync!'));
-    }
-
-    function triggerAutoBackup() {
-        if (!confirm('Back up current schema.json to your Telegram Channel automatically?')) return;
-        fetch('/api/backup-schema', { method: 'POST' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert(data.message);
-                } else {
-                    alert('Backup Error: ' + data.message);
-                }
-            })
-            .catch(err => alert('Network error performing backup!'));
-    }
-
-    function startOnboardingTour() {
-        if (typeof driver === 'undefined' || !driver.js) {
-            alert('Tour module is loading. Please try again in a moment.');
-            return;
+        if (mode === 'grid') {
+            grid.style.display = 'grid';
+            list.style.display = 'none';
+            btnGrid.classList.add('active');
+            btnList.classList.remove('active');
+        } else {
+            grid.style.display = 'none';
+            list.style.display = 'block';
+            btnList.classList.add('active');
+            btnGrid.classList.remove('active');
         }
-        const driverObj = driver.js.driver({
-            showProgress: true,
-            animate: true,
-            steps: [
-                { element: '[data-tour="metrics"]', popover: { title: '📊 Quick Storage Metrics', description: 'Monitor total files, subfolders, and cloud space consumed at a glance.', side: 'bottom', align: 'start' } },
-                { element: '[data-tour="upload-zone"]', popover: { title: '☁️ Drag & Drop Uploads', description: 'Upload single or multiple files of any size! Large files (>19.5MB) are automatically split into encrypted Telegram chunk parts.', side: 'bottom', align: 'center' } },
-                { element: '[data-tour="search-bar"]', popover: { title: '⚡ Instant Live Search', description: 'Filter files instantly in real-time as you type.', side: 'bottom', align: 'end' } },
-                { element: '[data-tour="files-table"]', popover: { title: '📁 File & Folder Manager', description: 'Preview media in-browser, generate shareable links, download directly, or move folders.', side: 'top', align: 'center' } },
-                { element: '[data-tour="system-status"]', popover: { title: '🛡️ Storage Status & Sync', description: 'View total storage consumption and schema validation timestamps.', side: 'top', align: 'center' } }
-            ],
-            onDestroyStarted: () => {
-                localStorage.setItem('telegram_cloud_tour_completed', 'true');
-                driverObj.destroy();
+        localStorage.setItem('telegram_cloud_view', mode);
+    }
+
+    function toggleMainTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('telegram_cloud_theme', newTheme);
+
+        const icon = document.getElementById('mainThemeIcon');
+        const text = document.getElementById('mainThemeText');
+        if (newTheme === 'light') {
+            icon.setAttribute('data-lucide', 'sun');
+            if (text) text.innerText = 'Light Theme';
+        } else {
+            icon.setAttribute('data-lucide', 'moon');
+            if (text) text.innerText = 'Dark Theme';
+        }
+        lucide.createIcons();
+    }
+
+    // Live search script
+    document.getElementById('live-search-input')?.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        document.querySelectorAll('.file-row').forEach(row => {
+            const fname = row.getAttribute('data-filename') || '';
+            row.style.display = fname.includes(query) ? '' : 'none';
+        });
+    });
+
+    // Category filter script
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const cat = btn.getAttribute('data-category');
+
+            const catMap = {
+                'images': ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'],
+                'videos': ['mp4', 'mkv', 'webm', 'avi', 'mov'],
+                'audio': ['mp3', 'wav', 'flac', 'ogg', 'm4a'],
+                'documents': ['pdf', 'doc', 'docx', 'txt', 'json', 'csv', 'xlsx'],
+                'archives': ['zip', 'rar', '7z', 'tar', 'gz']
+            };
+
+            document.querySelectorAll('.file-row').forEach(row => {
+                const fname = row.getAttribute('data-filename') || '';
+                const ext = fname.split('.').pop();
+                if (cat === 'all' || (catMap[cat] && catMap[cat].includes(ext))) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    // Preview handler
+    document.querySelectorAll('.preview-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const fileId = btn.getAttribute('data-fileid');
+            const fileName = btn.getAttribute('data-filename');
+            const modalBody = document.getElementById('previewModalBody');
+            const modalTitle = document.getElementById('previewModalTitle');
+            const downloadBtn = document.getElementById('previewDownloadBtn');
+
+            modalTitle.innerText = 'Preview: ' + fileName;
+            downloadBtn.href = '/download/' + fileId;
+            modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"></div><p class="mt-2">Fetching file stream...</p>';
+
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            modal.show();
+
+            const ext = fileName.split('.').pop().toLowerCase();
+            const previewUrl = '/preview/' + fileId;
+
+            if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'].includes(ext)) {
+                modalBody.innerHTML = `<img src="${previewUrl}" class="img-fluid rounded shadow" style="max-height: 70vh;">`;
+            } else if (['mp4', 'webm', 'ogv'].includes(ext)) {
+                modalBody.innerHTML = `<video controls autoplay class="w-100 rounded" style="max-height: 70vh;"><source src="${previewUrl}"></video>`;
+            } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+                modalBody.innerHTML = `<audio controls autoplay class="w-100 mt-4"><source src="${previewUrl}"></audio>`;
+            } else if (['pdf'].includes(ext)) {
+                modalBody.innerHTML = `<iframe src="${previewUrl}" style="width: 100%; height: 70vh; border: none;"></iframe>`;
+            } else {
+                modalBody.innerHTML = `<div class="p-4"><p>Preview not supported directly for .${ext} files.</p><a href="${previewUrl}" target="_blank" class="btn btn-outline-primary">Open Raw Stream</a></div>`;
             }
         });
-        driverObj.drive();
-    }
+    });
 
     document.addEventListener('DOMContentLoaded', () => {
-        if (typeof lucide !== 'undefined') {
-            lucide.createIcons();
+        const savedView = localStorage.getItem('telegram_cloud_view') || 'grid';
+        switchView(savedView);
+
+        const savedTheme = localStorage.getItem('telegram_cloud_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const icon = document.getElementById('mainThemeIcon');
+        const text = document.getElementById('mainThemeText');
+        if (savedTheme === 'light') {
+            if (icon) icon.setAttribute('data-lucide', 'sun');
+            if (text) text.innerText = 'Light Theme';
+        } else {
+            if (icon) icon.setAttribute('data-lucide', 'moon');
+            if (text) text.innerText = 'Dark Theme';
         }
-        if (typeof $ !== 'undefined' && $.fn.tooltip) {
-            $('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').tooltip({
-                container: 'body',
-                trigger: 'hover',
-                boundary: 'window'
-            });
-        }
-        if (!localStorage.getItem('telegram_cloud_tour_completed')) {
-            setTimeout(() => {
-                startOnboardingTour();
-            }, 800);
-        }
+        lucide.createIcons();
     });
     </script>
-    {% endif %}
 </body>
 </html>
-
-

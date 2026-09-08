@@ -14,6 +14,7 @@ COPY templates/ /svc/templates/
 COPY certs/ /svc/certs/
 COPY bot.py /svc/bot.py
 COPY core.py /svc/core.py
+COPY auth.py /svc/auth.py
 COPY gunicorn.conf.py /svc/gunicorn.conf.py
 COPY schema/ /svc/schema/
 COPY run.sh /svc/run.sh

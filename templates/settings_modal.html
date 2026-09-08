@@ -1,0 +1,305 @@
+<!-- Settings & Control Panel Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content glass-modal">
+            <div class="modal-header border-bottom border-secondary border-opacity-25">
+                <h5 class="modal-title fw-bold" id="settingsModalLabel">
+                    <i data-lucide="settings" class="me-2 text-primary"></i> 
+                    {% if current_user and current_user.is_admin %}
+                        Admin Control Panel & Settings
+                    {% else %}
+                        Account Settings & Preferences
+                    {% endif %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <ul class="nav nav-pills nav-fill mb-4" id="settingsTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-semibold" id="tab-account-link" data-bs-toggle="pill" data-bs-target="#tab-account" type="button" role="tab">
+                            <i data-lucide="shield-check" class="me-1"></i> Account & Security
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold" id="tab-theme-link" data-bs-toggle="pill" data-bs-target="#tab-theme" type="button" role="tab">
+                            <i data-lucide="palette" class="me-1"></i> Theme & Appearance
+                        </button>
+                    </li>
+                    {% if current_user and current_user.is_admin %}
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold text-warning" id="tab-codes-link" data-bs-toggle="pill" data-bs-target="#tab-codes" type="button" role="tab">
+                            <i data-lucide="key-round" class="me-1"></i> Pending Codes
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold text-info" id="tab-users-link" data-bs-toggle="pill" data-bs-target="#tab-users" type="button" role="tab">
+                            <i data-lucide="users" class="me-1"></i> Manage Users
+                        </button>
+                    </li>
+                    {% endif %}
+                </ul>
+
+                <div class="tab-content" id="settingsTabsContent">
+                    <!-- Tab 1: Account & Security -->
+                    <div class="tab-pane fade show active" id="tab-account" role="tabpanel">
+                        <div class="card bg-dark bg-opacity-50 border-secondary border-opacity-25 p-3 mb-4 rounded-3">
+                            <h6 class="fw-bold mb-2 text-primary">Account Details</h6>
+                            <div class="row g-3 small">
+                                <div class="col-6">
+                                    <span class="text-muted d-block">Username</span>
+                                    <span class="fw-bold">{{ current_user.username if current_user else 'user' }}</span>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted d-block">Role</span>
+                                    {% if current_user and current_user.is_admin %}
+                                        <span class="badge bg-purple text-white px-2 py-1">System Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-info text-dark px-2 py-1">Registered User</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card bg-dark bg-opacity-50 border-secondary border-opacity-25 p-3 rounded-3">
+                            <h6 class="fw-bold mb-3 text-warning">Change Password</h6>
+                            <form id="changePasswordForm" onsubmit="handlePasswordChange(event)">
+                                <div class="mb-3">
+                                    <label for="old_password" class="form-label small text-muted">Current Password</label>
+                                    <input type="password" class="form-control form-control-sm" id="old_password" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="new_password" class="form-label small text-muted">New Password (min 6 chars)</label>
+                                    <input type="password" class="form-control form-control-sm" id="new_password" minlength="6" required>
+                                </div>
+                                <button type="submit" class="btn btn-warning btn-sm fw-semibold">
+                                    <i data-lucide="save" style="width: 15px;"></i> Update Password
+                                </button>
+                            </form>
+                            <div id="pwdAlert" class="alert d-none mt-3 mb-0 small"></div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Theme & Appearance -->
+                    <div class="tab-pane fade" id="tab-theme" role="tabpanel">
+                        <h6 class="fw-bold mb-3">Choose Appearance Theme</h6>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('dark')" style="cursor: pointer;">
+                                    <i data-lucide="moon" class="mx-auto mb-2 text-primary" style="width: 32px; height: 32px;"></i>
+                                    <span class="fw-bold small d-block">Dark Mode (Default)</span>
+                                    <small class="text-muted">Deep sleek glassmorphism</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('light')" style="cursor: pointer;">
+                                    <i data-lucide="sun" class="mx-auto mb-2 text-warning" style="width: 32px; height: 32px;"></i>
+                                    <span class="fw-bold small d-block">Light Mode</span>
+                                    <small class="text-muted">Clean bright interface</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if current_user and current_user.is_admin %}
+                    <!-- Tab 3: Admin Pending Verification Codes -->
+                    <div class="tab-pane fade" id="tab-codes" role="tabpanel">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold mb-0 text-warning"><i data-lucide="key-round" class="me-1"></i> Registration Verification Codes</h6>
+                            <button class="btn btn-sm btn-outline-light" onclick="refreshAdminCodes()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
+                        </div>
+                        <p class="text-muted small">When users click "Send Code" during signup, their 6-digit access code appears here and in Telegram. Copy and share the code with the user to approve registration.</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Username</th>
+                                        <th>6-Digit Code</th>
+                                        <th>Expires At</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pendingCodesTableBody">
+                                    {% if pending_codes and pending_codes | length > 0 %}
+                                        {% for pc in pending_codes %}
+                                        <tr>
+                                            <td class="fw-bold text-info">{{ pc.username }}</td>
+                                            <td><span class="badge bg-warning text-dark fs-6 px-2 py-1 font-monospace">{{ pc.code }}</span></td>
+                                            <td class="small text-muted">{{ pc.expires_at }}</td>
+                                            <td>
+                                                <button class="btn btn-xs btn-outline-primary py-0 px-2" onclick="navigator.clipboard.writeText('{{ pc.code }}'); alert('Code {{ pc.code }} copied!');">Copy Code</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr><td colspan="4" class="text-center text-muted py-3">No pending registration codes.</td></tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Admin User Management -->
+                    <div class="tab-pane fade" id="tab-users" role="tabpanel">
+                        <div class="d-flex align-items-center justify-content-between mb-3">
+                            <h6 class="fw-bold mb-0 text-info"><i data-lucide="users" class="me-1"></i> Registered Users Directory</h6>
+                            <button class="btn btn-sm btn-outline-light" onclick="refreshAdminUsers()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-dark table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Username</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="registeredUsersTableBody">
+                                    {% if registered_users and registered_users | length > 0 %}
+                                        {% for u in registered_users %}
+                                        <tr>
+                                            <td>{{ u.user_id }}</td>
+                                            <td class="fw-bold">{{ u.username }}</td>
+                                            <td><span class="badge bg-secondary">{{ u.role }}</span></td>
+                                            <td>
+                                                {% if u.status == 'active' %}
+                                                    <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Disabled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-xs btn-outline-warning py-0 px-2 me-1" onclick="adminToggleUserStatus('{{ u.username }}')">
+                                                    {% if u.status == 'active' %}Deactivate{% else %}Activate{% endif %}
+                                                </button>
+                                                <button class="btn btn-xs btn-outline-danger py-0 px-2" onclick="adminResetUserPassword('{{ u.username }}')">Reset Pass</button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr><td colspan="5" class="text-center text-muted py-3">No registered users yet.</td></tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function handlePasswordChange(e) {
+    e.preventDefault();
+    const oldPass = document.getElementById('old_password').value;
+    const newPass = document.getElementById('new_password').value;
+    const el = document.getElementById('pwdAlert');
+
+    fetch('/api/settings/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ old_password: oldPass, new_password: newPass })
+    })
+    .then(res => res.json())
+    .then(data => {
+        el.className = `alert alert-${data.status === 'success' ? 'success' : 'danger'} mt-3 mb-0 small`;
+        el.innerText = data.message;
+        el.classList.remove('d-none');
+        if (data.status === 'success') {
+            document.getElementById('changePasswordForm').reset();
+        }
+    })
+    .catch(err => alert('Error changing password.'));
+}
+
+function setAppTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('telegram_cloud_theme', theme);
+    const themeIcon = document.getElementById('mainThemeIcon');
+    if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', theme === 'light' ? 'sun' : 'moon');
+        lucide.createIcons();
+    }
+}
+
+function refreshAdminCodes() {
+    fetch('/admin/pending-codes')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('pendingCodesTableBody');
+            tbody.innerHTML = '';
+            if (data.pending_codes && data.pending_codes.length > 0) {
+                data.pending_codes.forEach(pc => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold text-info">${pc.username}</td>
+                            <td><span class="badge bg-warning text-dark fs-6 px-2 py-1 font-monospace">${pc.code}</span></td>
+                            <td class="small text-muted">${pc.expires_at}</td>
+                            <td><button class="btn btn-xs btn-outline-primary py-0 px-2" onclick="navigator.clipboard.writeText('${pc.code}'); alert('Code ${pc.code} copied!');">Copy Code</button></td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-3">No pending registration codes.</td></tr>';
+            }
+        });
+}
+
+function refreshAdminUsers() {
+    fetch('/admin/users')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('registeredUsersTableBody');
+            tbody.innerHTML = '';
+            if (data.users && data.users.length > 0) {
+                data.users.forEach(u => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${u.user_id}</td>
+                            <td class="fw-bold">${u.username}</td>
+                            <td><span class="badge bg-secondary">${u.role}</span></td>
+                            <td><span class="badge bg-${u.status === 'active' ? 'success' : 'danger'}">${u.status}</span></td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-warning py-0 px-2 me-1" onclick="adminToggleUserStatus('${u.username}')">${u.status === 'active' ? 'Deactivate' : 'Activate'}</button>
+                                <button class="btn btn-xs btn-outline-danger py-0 px-2" onclick="adminResetUserPassword('${u.username}')">Reset Pass</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No registered users yet.</td></tr>';
+            }
+        });
+}
+
+function adminToggleUserStatus(username) {
+    if (!confirm(`Toggle status for user '${username}'?`)) return;
+    fetch('/admin/user/toggle-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        refreshAdminUsers();
+    });
+}
+
+function adminResetUserPassword(username) {
+    const newPass = prompt(`Enter new password for user '${username}':`);
+    if (!newPass) return;
+    fetch('/admin/user/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, new_password: newPass })
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message));
+}
+</script>

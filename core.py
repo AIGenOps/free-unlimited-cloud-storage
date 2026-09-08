@@ -163,6 +163,16 @@ class BotActions:
             return 0, error
 
 
+    def send_admin_notification(self, message_text: str) -> bool:
+        """Send a notification message directly to Telegram channel (e.g. registration verification code)."""
+        try:
+            self.__bot.send_message(chat_id=self.__channel_id, text=message_text, parse_mode="Markdown")
+            return True
+        except Exception as e:
+            logger.error(f"Failed sending admin Telegram notification: {e}")
+            return False
+
+
     def upload_file(self, file: datastructures.FileStorage | bytes, file_name: str, update_schema: bool = True, directory: str = "", progress_callback=None):
         try:
             file_name = sanitize_filename(file_name)

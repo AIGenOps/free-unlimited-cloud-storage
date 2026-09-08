@@ -116,32 +116,115 @@ def start_bot_polling(bot_instance):
 Thread(target=start_bot_polling, args=(bot,), daemon=True).start()
 
 
-class User(UserMixin):
-    def __init__(self, user_id):
-        self.id = user_id
+from auth import UserManager, User
+from flask_login import current_user
 
-def authenticate_user(username, password):
-    # Replace this with your actual user authentication logic
-    if username == temp_app_username and password == temp_app_password:
-        return User(1)  # User id is always 1.
-    return None
+user_manager = UserManager(filepath="./schema/users.json")
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User(user_id)
+    return user_manager.get_user_by_id(user_id)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        user = authenticate_user(request.form['username'], request.form['password'])
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        user = user_manager.authenticate(username, password)
         if user:
-            login_user(user)  # Log in the user
-            # flash('Login successful!', 'success')
+            login_user(user)
             return redirect(url_for('index'))
         else:
-            flash('Invalid credentials', 'danger')
+            flash('Invalid username or password, or account inactive.', 'danger')
 
     return render_template('login.html')
+
+@app.route('/api/request-code', methods=['POST'])
+def api_request_code():
+    data = request.get_json() or request.form
+    username = data.get('username', '').strip()
+    success, msg, code = user_manager.request_verification_code(username)
+    if success:
+        # Dispatch notification to Admin Telegram Channel
+        notify_text = (
+            f"🔐 *New User Registration Code Request*\n\n"
+            f"• *Username*: `{username}`\n"
+            f"• *Verification Code*: `{code}`\n\n"
+            f"_Share this 6-digit code with the user to approve account creation._"
+        )
+        bot.send_admin_notification(notify_text)
+        return jsonify({"status": "success", "message": f"Verification code sent to Admin on Telegram! Ask your Admin for the 6-digit access code for user '{username}'."})
+    else:
+        return jsonify({"status": "error", "message": msg}), 400
+
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json() or request.form
+    username = data.get('username', '').strip()
+    code = data.get('code', '').strip()
+    password = data.get('password', '')
+
+    success, msg = user_manager.create_user_with_code(username, code, password)
+    if success:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({"status": "success", "message": msg})
+        flash(msg, "success")
+        return redirect(url_for('login'))
+    else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({"status": "error", "message": msg}), 400
+        flash(msg, "danger")
+        return redirect(url_for('login'))
+
+@app.route('/api/settings/change-password', methods=['POST'])
+@login_required
+def api_change_password():
+    data = request.get_json() or request.form
+    old_pass = data.get('old_password', '')
+    new_pass = data.get('new_password', '')
+    success, msg = user_manager.change_password(current_user.username, old_pass, new_pass)
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    return jsonify({"status": "error", "message": msg}), 400
+
+@app.route('/admin/users', methods=['GET'])
+@login_required
+def admin_users():
+    if not current_user.is_admin:
+        return jsonify({"error": "Admin access required"}), 403
+    return jsonify({"users": user_manager.get_all_users()})
+
+@app.route('/admin/pending-codes', methods=['GET'])
+@login_required
+def admin_pending_codes():
+    if not current_user.is_admin:
+        return jsonify({"error": "Admin access required"}), 403
+    return jsonify({"pending_codes": user_manager.get_pending_codes()})
+
+@app.route('/admin/user/toggle-status', methods=['POST'])
+@login_required
+def admin_toggle_user_status():
+    if not current_user.is_admin:
+        return jsonify({"error": "Admin access required"}), 403
+    data = request.get_json() or request.form
+    username = data.get('username', '').strip()
+    success, msg = user_manager.toggle_user_status(username)
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    return jsonify({"status": "error", "message": msg}), 400
+
+@app.route('/admin/user/reset-password', methods=['POST'])
+@login_required
+def admin_reset_user_password():
+    if not current_user.is_admin:
+        return jsonify({"error": "Admin access required"}), 403
+    data = request.get_json() or request.form
+    username = data.get('username', '').strip()
+    new_pass = data.get('new_password', '')
+    success, msg = user_manager.admin_reset_password(username, new_pass)
+    if success:
+        return jsonify({"status": "success", "message": msg})
+    return jsonify({"status": "error", "message": msg}), 400
 
 @app.route('/logout')
 @login_required
@@ -171,11 +254,29 @@ def index():
         last_val = str(datetime.fromtimestamp(last_val))
 
     directory = request.args.get('target_directory', None)
+    
+    # User management lists for admin view
+    registered_users = user_manager.get_all_users() if current_user.is_admin else []
+    pending_codes = user_manager.get_pending_codes() if current_user.is_admin else []
+
     if directory is None:
         folders = list(bot._schema.keys())
         if "root" in folders: folders.remove("root")
         if "meta" in folders: folders.remove("meta")
-        return render_template('index.html', files=bot._schema["root"], folders=folders, working_directory="", total_size=total_size_fmt, total_files_system=total_files_sys, total_folders_system=total_folders_sys, last_validated=last_val, security_warning=security_warning)
+        return render_template(
+            'index.html',
+            files=bot._schema["root"],
+            folders=folders,
+            working_directory="",
+            total_size=total_size_fmt,
+            total_files_system=total_files_sys,
+            total_folders_system=total_folders_sys,
+            last_validated=last_val,
+            security_warning=security_warning,
+            current_user=current_user,
+            registered_users=registered_users,
+            pending_codes=pending_codes
+        )
     else:
         _, ret_structure, err = bot._ops.get_contents_in_directory(directory, bot._schema.copy(), files_only=False)
         if ret_structure is not False:
@@ -188,7 +289,21 @@ def index():
                 if path_item != "":
                     path_str = path_str + '/' + path_item
                     directory_parts.append((path_item, path_str))
-            return render_template('index.html', files=ret_structure["root"], folders=folders, working_directory=directory, directory_parts=directory_parts, total_size=total_size_fmt, total_files_system=total_files_sys, total_folders_system=total_folders_sys, last_validated=last_val, security_warning=security_warning)
+            return render_template(
+                'index.html',
+                files=ret_structure["root"],
+                folders=folders,
+                working_directory=directory,
+                directory_parts=directory_parts,
+                total_size=total_size_fmt,
+                total_files_system=total_files_sys,
+                total_folders_system=total_folders_sys,
+                last_validated=last_val,
+                security_warning=security_warning,
+                current_user=current_user,
+                registered_users=registered_users,
+                pending_codes=pending_codes
+            )
         return jsonify({"error": err})
 
 @app.route('/bulk-upload/', methods=['GET'])    # For full folder uploads.
