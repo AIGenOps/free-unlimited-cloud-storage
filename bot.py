@@ -328,11 +328,17 @@ def index():
     _, security_warning = bot.get_active_users_in_channel()
     analytics = bot.get_storage_analytics()
     total_size_fmt = analytics.get("total_size_formatted", "0 KB")
+    total_size_bytes = analytics.get("total_size_bytes", 0)
     total_files_sys = analytics.get("total_files", 0)
     total_folders_sys = analytics.get("total_folders", 0)
     last_val = bot._schema.get("meta", {}).get("last_validated", "Live")
     if isinstance(last_val, float):
         last_val = str(datetime.fromtimestamp(last_val))
+
+    # Calculate dynamic percentage relative to a 10 GB visual quota reference
+    storage_percentage = min(100.0, max(0.0, round((total_size_bytes / (10 * 1024 * 1024 * 1024)) * 100, 1)))
+    if total_size_bytes > 0 and storage_percentage < 1.0:
+        storage_percentage = 1.0
 
     directory = request.args.get('target_directory', None)
     
@@ -350,6 +356,7 @@ def index():
             folders=folders,
             working_directory="",
             total_size=total_size_fmt,
+            storage_percentage=storage_percentage,
             total_files_system=total_files_sys,
             total_folders_system=total_folders_sys,
             last_validated=last_val,
@@ -377,6 +384,7 @@ def index():
                 working_directory=directory,
                 directory_parts=directory_parts,
                 total_size=total_size_fmt,
+                storage_percentage=storage_percentage,
                 total_files_system=total_files_sys,
                 total_folders_system=total_folders_sys,
                 last_validated=last_val,

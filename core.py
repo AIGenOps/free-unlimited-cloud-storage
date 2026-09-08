@@ -568,7 +568,23 @@ class BotActions:
                         chunk_sum += self._parse_size_string(str(chk.get("size", "0")))
             if chunk_sum > 0:
                 return chunk_sum
-        return self._parse_size_string(str(file_info.get("size", "0")))
+        parsed = self._parse_size_string(str(file_info.get("size", "0")))
+        if parsed > 0:
+            return parsed
+
+        # Fallback for Unknown size files: try fetching cloud file size from Telegram API if file_id exists
+        file_id = file_info.get("file_id", "")
+        if file_id and not file_id.startswith("imported_"):
+            try:
+                cloud_file = self.__bot.get_file(file_id=file_id)
+                if cloud_file and cloud_file.file_size > 0:
+                    file_info["raw_size_bytes"] = cloud_file.file_size
+                    file_info["size"] = self._format_size_human(cloud_file.file_size)
+                    return cloud_file.file_size
+            except Exception:
+                pass
+
+        return 0
 
     @staticmethod
     def _format_size_human(num_bytes: int) -> str:

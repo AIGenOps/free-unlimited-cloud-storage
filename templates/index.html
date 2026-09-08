@@ -61,9 +61,9 @@
                 <span class="fw-bold" style="color: var(--success-green);">{{ total_size }}</span>
             </div>
             <div class="storage-progress-bar mb-2">
-                <div class="storage-progress-fill" style="width: 45%;"></div>
+                <div class="storage-progress-fill" style="width: {{ storage_percentage if storage_percentage is defined else 2 }}%;"></div>
             </div>
-            <small class="text-white-50" style="font-size: 0.78rem;">Unlimited Telegram Cloud</small>
+            <small class="text-white-50" style="font-size: 0.78rem;">Unlimited Telegram Cloud ({{ storage_percentage if storage_percentage is defined else 0 }}% used)</small>
         </div>
 
         <!-- 3. Theme Toggle Button Bar -->
