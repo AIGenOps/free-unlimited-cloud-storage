@@ -298,12 +298,17 @@ def logout():
     flash('Logout successful!', 'success')
     return redirect(url_for('login'))
 
-@app.before_request
-def block_on_validation_and_check_session():
-    """call this function in first line of each route, to block traffic during schema validation process and verify active session validity."""
+def block_on_validation_in_progress():
+    """call this function in first line of each route, to block traffic during schema validation process. To maintain schema.json integrity."""
     if bot.is_validation_active() is True:
         return jsonify({"message": "No action allowed this time, A validation Job is in progress. Kindly come back later!"}), 404
-    
+
+@app.before_request
+def before_request_security_check():
+    val_check = block_on_validation_in_progress()
+    if val_check:
+        return val_check
+
     # Verify active session validity
     if current_user.is_authenticated and request.endpoint and request.endpoint != 'static' and request.endpoint != 'logout':
         s_id = session.get('session_id')
