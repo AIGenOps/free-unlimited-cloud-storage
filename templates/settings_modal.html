@@ -25,6 +25,11 @@
                             <i data-lucide="palette" class="me-1"></i> Theme & Appearance
                         </button>
                     </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-semibold text-primary" id="tab-sessions-link" data-bs-toggle="pill" data-bs-target="#tab-sessions" type="button" role="tab" onclick="refreshLiveSessions()">
+                            <i data-lucide="monitor" class="me-1"></i> Active Sessions
+                        </button>
+                    </li>
                     {% if current_user and current_user.is_admin %}
                     <li class="nav-item" role="presentation">
                         <button class="nav-link fw-semibold text-warning" id="tab-codes-link" data-bs-toggle="pill" data-bs-target="#tab-codes" type="button" role="tab">
@@ -97,6 +102,36 @@
                                     <small class="text-muted">Clean bright interface</small>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Active Live Sessions -->
+                    <div class="tab-pane fade" id="tab-sessions" role="tabpanel">
+                        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                            <h6 class="fw-bold mb-0 text-primary"><i data-lucide="monitor" class="me-1"></i> Active Live Sessions</h6>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary me-1" onclick="refreshLiveSessions()"><i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i> Refresh</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="invalidateAllSessions()"><i data-lucide="shield-off" style="width: 14px; height: 14px;"></i> Invalidate All Sessions</button>
+                            </div>
+                        </div>
+                        <p class="text-muted small">View all active devices and sessions currently signed into drive account{% if current_user and current_user.is_admin %} and system-wide users{% endif %}.</p>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>IP Address</th>
+                                        <th>Device / User-Agent</th>
+                                        <th>Last Active</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="liveSessionsTableBody">
+                                    <tr><td colspan="6" class="text-center text-muted py-3">Loading sessions...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
@@ -301,5 +336,74 @@ function adminResetUserPassword(username) {
     })
     .then(res => res.json())
     .then(data => alert(data.message));
+}
+
+function refreshLiveSessions() {
+    fetch('/api/sessions')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('liveSessionsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(s => {
+                    const isCurrent = s.is_current ? '<span class="badge bg-success ms-1">This Device</span>' : '';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="fw-bold">${s.username} ${isCurrent}</td>
+                            <td class="small font-monospace">${s.ip_address}</td>
+                            <td class="small text-muted text-truncate" style="max-width: 220px;" title="${s.user_agent}">${s.user_agent}</td>
+                            <td class="small text-muted">${s.last_activity}</td>
+                            <td><span class="badge bg-primary">Active</span></td>
+                            <td>
+                                <button class="btn btn-xs btn-outline-danger py-0 px-2" onclick="revokeSession('${s.session_id}')">Terminate</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No active sessions found.</td></tr>';
+            }
+        })
+        .catch(err => {
+            const tbody = document.getElementById('liveSessionsTableBody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger py-3">Error fetching active sessions.</td></tr>';
+        });
+}
+
+function revokeSession(sid) {
+    if (!confirm('Terminate this session? The device will be logged out immediately.')) return;
+    fetch('/api/sessions/revoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.self_logout) {
+            window.location.href = '/login';
+        } else {
+            refreshLiveSessions();
+        }
+    });
+}
+
+function invalidateAllSessions() {
+    if (!confirm('Invalidate ALL active live sessions? This will log out all active sessions.')) return;
+    fetch('/admin/sessions/invalidate-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message);
+        if (data.self_logout) {
+            window.location.href = '/login';
+        } else {
+            refreshLiveSessions();
+        }
+    });
 }
 </script>

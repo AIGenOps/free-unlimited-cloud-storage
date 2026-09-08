@@ -11,7 +11,7 @@ import logging
 import json
 import queue
 from telegram import Bot
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, flash, Response, stream_with_context
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, flash, Response, stream_with_context, session
 from flask_login import LoginManager, login_user, UserMixin, login_required, logout_user
 from threading import Thread
 from dotenv import load_dotenv
@@ -32,7 +32,7 @@ if enable_ssl:
     context.load_cert_chain('certs/cert.pem', 'certs/key.pem')
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'  # Optional for now, For Sake of flash messages.
+app.secret_key = os.getenv("SECRET_KEY", f"tg_cloud_sec_{os.getenv('APP_USER_NAME', 'admin')}_{os.getenv('APP_PASSWORD', 'pass')}_v2")
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'  # Specify the login route, otherwise auto-redirect to login page won't work.
 Thread(target=manage_file_shares, args=(shared_files_dict, ), daemon=True).start()  #  start thread for monitoring, enforcing time limit for each file shared.
@@ -116,7 +116,7 @@ def start_bot_polling(bot_instance):
 Thread(target=start_bot_polling, args=(bot,), daemon=True).start()
 
 
-from auth import UserManager, User
+from auth import UserManager, User, session_manager
 from flask_login import current_user
 
 user_manager = UserManager(filepath="./schema/users.json")
@@ -133,6 +133,11 @@ def login():
         user = user_manager.authenticate(username, password)
         if user:
             login_user(user)
+            # Track active live session
+            ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr or '127.0.0.1').split(',')[0].strip()
+            user_agent = request.headers.get('User-Agent', 'Unknown Device')
+            sess_id = session_manager.create_session(user.id, user.username, user.role, ip_addr, user_agent)
+            session['session_id'] = sess_id
             return redirect(url_for('index'))
         else:
             flash('Invalid username or password, or account inactive.', 'danger')
@@ -187,6 +192,57 @@ def api_change_password():
         return jsonify({"status": "success", "message": msg})
     return jsonify({"status": "error", "message": msg}), 400
 
+@app.route('/api/sessions', methods=['GET'])
+@login_required
+def get_live_sessions():
+    is_admin = current_user.is_admin
+    sessions_list = session_manager.get_sessions(target_username=current_user.username, is_admin=is_admin)
+    current_sess_id = session.get('session_id')
+    for s in sessions_list:
+        s['is_current'] = (s.get('session_id') == current_sess_id)
+    return jsonify({"status": "success", "sessions": sessions_list, "current_session_id": current_sess_id})
+
+@app.route('/api/sessions/revoke', methods=['POST'])
+@login_required
+def revoke_session_endpoint():
+    data = request.get_json() or request.form
+    target_sid = data.get('session_id', '').strip()
+    if not target_sid:
+        return jsonify({"status": "error", "message": "Session ID required"}), 400
+
+    user_sessions = session_manager.get_sessions(target_username=current_user.username, is_admin=current_user.is_admin)
+    allowed_ids = [s['session_id'] for s in user_sessions]
+
+    if target_sid not in allowed_ids and not current_user.is_admin:
+        return jsonify({"status": "error", "message": "Unauthorized to revoke this session"}), 403
+
+    success, msg = session_manager.revoke_session(target_sid)
+    if success:
+        if target_sid == session.get('session_id'):
+            logout_user()
+            session.clear()
+            return jsonify({"status": "success", "message": "Current session terminated. Logged out.", "self_logout": True})
+        return jsonify({"status": "success", "message": msg})
+    return jsonify({"status": "error", "message": msg}), 400
+
+@app.route('/admin/sessions/invalidate-all', methods=['POST'])
+@login_required
+def admin_invalidate_all_sessions():
+    data = request.get_json() or {}
+    target_user = data.get('username')
+    if target_user and not current_user.is_admin and target_user != current_user.username:
+        return jsonify({"status": "error", "message": "Admin access required"}), 403
+
+    if not target_user and not current_user.is_admin:
+        return jsonify({"status": "error", "message": "Admin access required to invalidate all system sessions"}), 403
+
+    count = session_manager.invalidate_all_sessions(target_username=target_user)
+    if target_user == current_user.username or not target_user:
+        logout_user()
+        session.clear()
+        return jsonify({"status": "success", "message": f"Successfully invalidated {count} live session(s). Logged out.", "self_logout": True})
+    return jsonify({"status": "success", "message": f"Successfully invalidated {count} live session(s) for '{target_user}'."})
+
 @app.route('/admin/users', methods=['GET'])
 @login_required
 def admin_users():
@@ -210,6 +266,9 @@ def admin_toggle_user_status():
     username = data.get('username', '').strip()
     success, msg = user_manager.toggle_user_status(username)
     if success:
+        # Also invalidate active sessions for deactivated user
+        if user_manager.users.get(username, {}).get("status") == "inactive":
+            session_manager.invalidate_all_sessions(target_username=username)
         return jsonify({"status": "success", "message": msg})
     return jsonify({"status": "error", "message": msg}), 400
 
@@ -223,21 +282,38 @@ def admin_reset_user_password():
     new_pass = data.get('new_password', '')
     success, msg = user_manager.admin_reset_password(username, new_pass)
     if success:
+        # Invalidate sessions for target user so they must login with new pass
+        session_manager.invalidate_all_sessions(target_username=username)
         return jsonify({"status": "success", "message": msg})
     return jsonify({"status": "error", "message": msg}), 400
 
 @app.route('/logout')
 @login_required
 def logout():
+    s_id = session.get('session_id')
+    if s_id:
+        session_manager.revoke_session(s_id)
     logout_user()
+    session.clear()
     flash('Logout successful!', 'success')
     return redirect(url_for('login'))
 
 @app.before_request
-def block_on_validation_in_progress():
-    """call this function in first line of each route, to block traffic during schema validation process. To maintain schema.json integrity."""
+def block_on_validation_and_check_session():
+    """call this function in first line of each route, to block traffic during schema validation process and verify active session validity."""
     if bot.is_validation_active() is True:
         return jsonify({"message": "No action allowed this time, A validation Job is in progress. Kindly come back later!"}), 404
+    
+    # Verify active session validity
+    if current_user.is_authenticated and request.endpoint and request.endpoint != 'static' and request.endpoint != 'logout':
+        s_id = session.get('session_id')
+        if not s_id or not session_manager.touch_session(s_id):
+            logout_user()
+            session.clear()
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+                return jsonify({"status": "error", "message": "Session invalidated or revoked. Please log in again."}), 401
+            flash('Your session has expired or was revoked. Please sign in again.', 'warning')
+            return redirect(url_for('login'))
 
 # Flask routes
 @app.route('/', methods=['GET'])

@@ -1,10 +1,11 @@
 """
 TelegramCloud User Management & Auth Module
-Handles multi-user authentication, roles, password hashing, and admin verification codes.
+Handles multi-user authentication, roles, password hashing, admin verification codes, and live session tracking.
 """
 
 import os
 import json
+import uuid
 import random
 import logging
 import threading
@@ -24,6 +25,96 @@ class User(UserMixin):
     @property
     def is_admin(self) -> bool:
         return self.role == "admin"
+
+class SessionManager:
+    def __init__(self, filepath: str = "./schema/sessions.json"):
+        self.filepath = filepath
+        self._lock = threading.Lock()
+        self.sessions: dict = {}  # {session_id: {...}}
+        self._load_sessions()
+
+    def _load_sessions(self):
+        with self._lock:
+            dir_name = os.path.dirname(self.filepath) or "."
+            os.makedirs(dir_name, exist_ok=True)
+            if os.path.exists(self.filepath):
+                try:
+                    with open(self.filepath, "r", encoding="utf-8") as f:
+                        self.sessions = json.load(f)
+                except Exception as e:
+                    logger.error(f"Error loading sessions: {e}")
+                    self.sessions = {}
+            else:
+                self.sessions = {}
+
+    def _save_sessions_unlocked(self):
+        try:
+            dir_name = os.path.dirname(self.filepath) or "."
+            os.makedirs(dir_name, exist_ok=True)
+            with open(self.filepath, "w", encoding="utf-8") as f:
+                json.dump(self.sessions, f, indent=4)
+        except Exception as e:
+            logger.error(f"Failed saving sessions: {e}")
+
+    def create_session(self, user_id: str, username: str, role: str, ip_address: str, user_agent: str) -> str:
+        session_id = str(uuid.uuid4())
+        now_str = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        ua_summary = user_agent[:120] if user_agent else "Unknown Browser/Device"
+        with self._lock:
+            self.sessions[session_id] = {
+                "session_id": session_id,
+                "user_id": user_id,
+                "username": username,
+                "role": role,
+                "ip_address": ip_address or "127.0.0.1",
+                "user_agent": ua_summary,
+                "login_time": now_str,
+                "last_activity": now_str,
+                "status": "active"
+            }
+            self._save_sessions_unlocked()
+        return session_id
+
+    def touch_session(self, session_id: str) -> bool:
+        if not session_id:
+            return False
+        with self._lock:
+            sess = self.sessions.get(session_id)
+            if not sess or sess.get("status") != "active":
+                return False
+            sess["last_activity"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+            return True
+
+    def revoke_session(self, session_id: str) -> tuple[bool, str]:
+        with self._lock:
+            if session_id in self.sessions:
+                del self.sessions[session_id]
+                self._save_sessions_unlocked()
+                return True, f"Session '{session_id[:8]}...' revoked successfully."
+            return False, "Session not found."
+
+    def invalidate_all_sessions(self, target_username: str = None) -> int:
+        count = 0
+        with self._lock:
+            if target_username:
+                to_delete = [s_id for s_id, s_data in self.sessions.items() if s_data.get("username") == target_username]
+            else:
+                to_delete = list(self.sessions.keys())
+            
+            for s_id in to_delete:
+                del self.sessions[s_id]
+                count += 1
+            self._save_sessions_unlocked()
+        return count
+
+    def get_sessions(self, target_username: str = None, is_admin: bool = False) -> list[dict]:
+        with self._lock:
+            res = []
+            for s_id, s_data in self.sessions.items():
+                if is_admin or not target_username or s_data.get("username") == target_username:
+                    res.append(dict(s_data))
+            res.sort(key=lambda x: x.get("last_activity", ""), reverse=True)
+            return res
 
 class UserManager:
     def __init__(self, filepath: str = "./schema/users.json"):
@@ -228,3 +319,5 @@ class UserManager:
             udata["password_hash"] = generate_password_hash(new_pass)
             self._save_users_unlocked()
             return True, f"Password for '{username}' reset successfully."
+
+session_manager = SessionManager(filepath="./schema/sessions.json")
