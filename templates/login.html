@@ -2,210 +2,302 @@
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login & Sign Up - Telegram Cloud</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sign In - Telegram Cloud Drive</title>
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/theme.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-            --card-bg: rgba(30, 41, 59, 0.75);
-            --text-color: #f8fafc;
-            --text-muted: #94a3b8;
-            --input-bg: rgba(15, 23, 42, 0.6);
-            --input-border: rgba(255, 255, 255, 0.15);
-            --primary-accent: #3b82f6;
-        }
-
-        [data-theme="light"] {
-            --bg-gradient: linear-gradient(135deg, #f1f5f9 0%, #e0e7ff 50%, #f1f5f9 100%);
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --text-color: #0f172a;
-            --text-muted: #64748b;
-            --input-bg: rgba(255, 255, 255, 0.9);
-            --input-border: rgba(0, 0, 0, 0.15);
-            --primary-accent: #2563eb;
-        }
-
         body {
-            background: var(--bg-gradient);
-            min-height: 100vh;
-            color: var(--text-color);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            transition: background 0.3s ease;
+            min-height: 100vh;
+            padding: 20px 16px;
+            position: relative;
+            background-color: var(--bg-main);
         }
 
-        .auth-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--input-border);
-            border-radius: 20px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-            width: 100%;
-            max-width: 440px;
-            padding: 32px;
-        }
-
-        .nav-pills .nav-link {
-            color: var(--text-muted);
-            border-radius: 12px;
-            font-weight: 600;
-            padding: 10px 16px;
-            transition: all 0.2s ease;
-        }
-
-        .nav-pills .nav-link.active {
-            background-color: var(--primary-accent);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-
-        .form-control {
-            background: var(--input-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text-color);
-            border-radius: 10px;
-            padding: 12px 16px;
-        }
-
-        .form-control:focus {
-            background: var(--input-bg);
-            border-color: var(--primary-accent);
-            color: var(--text-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-        }
-
-        .theme-toggle-btn {
+        /* Floating Top-Right Theme Toggle */
+        .auth-theme-toggle {
             position: absolute;
-            top: 20px;
-            right: 20px;
-            background: var(--card-bg);
-            border: 1px solid var(--input-border);
-            color: var(--text-color);
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
+            top: 24px;
+            right: 24px;
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            backdrop-filter: blur(10px);
+            box-shadow: var(--card-shadow);
+            transition: all 0.15s ease;
+            z-index: 10;
         }
 
-        .badge-admin-info {
-            background: rgba(124, 58, 237, 0.15);
-            border: 1px solid rgba(124, 58, 237, 0.3);
-            color: #a78bfa;
+        .auth-theme-toggle:hover {
+            background: var(--surface-elevated);
+            border-color: var(--border-color-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Authentication Container Card */
+        .auth-card-modern {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 36px 32px;
+            box-shadow: var(--card-shadow-hover);
+            transition: all 0.2s ease;
+        }
+
+        /* Header Logo */
+        .auth-logo-badge {
+            width: 52px;
+            height: 52px;
+            background: var(--primary-blue);
+            color: #FFFFFF;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px auto;
+            box-shadow: 0 4px 14px rgba(22, 131, 255, 0.3);
+        }
+
+        /* Segmented Nav Tabs */
+        .auth-segmented-nav {
+            display: flex;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 24px;
+        }
+
+        .auth-segmented-nav .nav-link {
+            flex: 1;
+            text-align: center;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 0.88rem;
+            padding: 8px 16px;
+            border-radius: 9px;
+            border: none;
+            background: transparent;
+            transition: all 0.15s ease;
+        }
+
+        .auth-segmented-nav .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .auth-segmented-nav .nav-link.active {
+            background: var(--primary-blue);
+            color: #FFFFFF !important;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(22, 131, 255, 0.25);
+        }
+
+        /* Unified Form Field Inputs */
+        .input-box-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: var(--surface-elevated);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2px 12px;
+            transition: all 0.15s ease;
+        }
+
+        .input-box-wrapper:focus-within {
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(22, 131, 255, 0.15);
+        }
+
+        .input-box-icon {
+            color: var(--text-muted);
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .input-box-field {
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            padding: 10px 0;
+            width: 100%;
+            outline: none;
+        }
+
+        .input-box-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* Admin Info Callout Box */
+        .admin-callout-box {
+            background: var(--primary-blue-light);
+            border: 1px solid var(--primary-blue-border);
+            color: var(--text-primary);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 0.84rem;
+            margin-bottom: 20px;
+            line-height: 1.45;
+        }
+
+        .btn-auth-submit {
+            background: var(--primary-blue);
+            color: #FFFFFF !important;
+            font-weight: 600;
+            font-size: 0.92rem;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(22, 131, 255, 0.25);
+            transition: all 0.15s ease;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .btn-auth-submit:hover {
+            background: var(--primary-blue-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(22, 131, 255, 0.35);
+        }
+
+        .btn-send-code {
+            background: var(--primary-blue-light);
+            color: var(--primary-blue);
+            border: 1px solid var(--primary-blue-border);
+            font-weight: 600;
+            font-size: 0.82rem;
             border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 0.85rem;
+            padding: 6px 12px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-send-code:hover {
+            background: var(--primary-blue);
+            color: #FFFFFF;
         }
     </style>
 </head>
 <body>
-    <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
-        <i data-lucide="moon" id="themeIcon"></i>
+    <!-- Theme Toggle Button -->
+    <button class="auth-theme-toggle" id="themeToggleBtn" onclick="toggleTheme()" title="Toggle Light/Dark Theme">
+        <i data-lucide="moon" id="themeIcon" style="width: 20px; height: 20px;"></i>
     </button>
 
-    <div class="auth-card">
+    <div class="auth-card-modern">
+        <!-- Brand Header -->
         <div class="text-center mb-4">
-            <div class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-circle mb-3" style="width: 56px; height: 56px;">
-                <i data-lucide="cloud" style="width: 30px; height: 30px;"></i>
+            <div class="auth-logo-badge">
+                <i data-lucide="cloud" style="width: 28px; height: 28px;"></i>
             </div>
-            <h3 class="fw-bold mb-1">Telegram Cloud</h3>
-            <p class="text-muted small">Encrypted Unlimited Storage Drive</p>
+            <h3 class="fw-bold mb-1" style="font-size: 1.35rem; color: var(--text-primary);">Telegram <span class="text-primary">Cloud</span></h3>
+            <p class="text-muted small mb-0" style="font-size: 0.85rem;">Encrypted SaaS Drive Dashboard</p>
         </div>
 
         {% include 'flash.html' %}
-        <div id="authAlert" class="alert d-none" role="alert"></div>
+        <div id="authAlert" class="alert d-none mb-3" role="alert"></div>
 
-        <ul class="nav nav-pills nav-justified mb-4" id="authTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="login-tab" data-bs-toggle="pill" data-bs-target="#login-pane" type="button" role="tab">Sign In</button>
+        <!-- Segmented Tab Nav -->
+        <ul class="nav auth-segmented-nav" id="authTabs" role="tablist">
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100 active" id="login-tab" data-bs-toggle="pill" data-bs-target="#login-pane" type="button" role="tab">Sign In</button>
             </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="signup-tab" data-bs-toggle="pill" data-bs-target="#signup-pane" type="button" role="tab">Create Account</button>
+            <li class="nav-item flex-fill" role="presentation">
+                <button class="nav-link w-100" id="signup-tab" data-bs-toggle="pill" data-bs-target="#signup-pane" type="button" role="tab">Create Account</button>
             </li>
         </ul>
 
         <div class="tab-content" id="authTabsContent">
-            <!-- Login Form -->
+            <!-- 1. Sign In Form -->
             <div class="tab-pane fade show active" id="login-pane" role="tabpanel">
                 <form method="post" action="{{ url_for('login') }}">
                     <div class="mb-3">
-                        <label for="login_username" class="form-label small text-muted fw-semibold">Username</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i data-lucide="user" style="width: 18px;"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="login_username" name="username" placeholder="Enter your username" required>
+                        <label for="login_username" class="form-label small fw-semibold text-muted mb-1">Username</label>
+                        <div class="input-box-wrapper">
+                            <i data-lucide="user" class="input-box-icon" style="width: 18px; height: 18px;"></i>
+                            <input type="text" class="input-box-field" id="login_username" name="username" placeholder="Enter your username" required autocomplete="username">
                         </div>
                     </div>
+
                     <div class="mb-4">
-                        <label for="login_password" class="form-label small text-muted fw-semibold">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i data-lucide="lock" style="width: 18px;"></i></span>
-                            <input type="password" class="form-control border-start-0 ps-0" id="login_password" name="password" placeholder="Enter your password" required>
+                        <label for="login_password" class="form-label small fw-semibold text-muted mb-1">Password</label>
+                        <div class="input-box-wrapper">
+                            <i data-lucide="lock" class="input-box-icon" style="width: 18px; height: 18px;"></i>
+                            <input type="password" class="input-box-field" id="login_password" name="password" placeholder="Enter your password" required autocomplete="current-password">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold shadow-sm">
-                        <i data-lucide="log-in" style="width: 18px; vertical-align: middle;" class="me-1"></i> Sign In to Drive
+
+                    <button type="submit" class="btn-auth-submit">
+                        <i data-lucide="log-in" style="width: 18px; height: 18px; vertical-align: sub;" class="me-1"></i> Sign In to Drive
                     </button>
                 </form>
             </div>
 
-            <!-- Sign Up Form (Admin Verification Code Flow) -->
+            <!-- 2. Create Account Form -->
             <div class="tab-pane fade" id="signup-pane" role="tabpanel">
-                <div class="badge-admin-info mb-3">
-                    <i data-lucide="shield-alert" style="width: 16px; vertical-align: text-bottom;" class="me-1"></i>
-                    <strong>Admin Verification Required</strong><br>
-                    Request a verification code. The code will be sent to the Admin on Telegram. Get the 6-digit code from Admin to complete signup.
+                <div class="admin-callout-box">
+                    <div class="d-flex align-items-center gap-2 mb-1 fw-bold text-primary">
+                        <i data-lucide="shield-alert" style="width: 16px; height: 16px;"></i>
+                        <span>Admin Verification Required</span>
+                    </div>
+                    Enter desired username, click <strong>Send Code</strong>, and enter the 6-digit verification code received from Admin to complete registration.
                 </div>
 
                 <form id="signupForm" onsubmit="handleSignup(event)">
                     <div class="mb-3">
-                        <label for="signup_username" class="form-label small text-muted fw-semibold">Desired Username</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="signup_username" name="username" placeholder="Choose a username" required>
-                            <button type="button" class="btn btn-outline-primary" id="btnSendCode" onclick="requestCode()">
-                                <i data-lucide="send" style="width: 15px;"></i> Send Code
+                        <label for="signup_username" class="form-label small fw-semibold text-muted mb-1">Desired Username</label>
+                        <div class="input-box-wrapper pe-2">
+                            <i data-lucide="user" class="input-box-icon" style="width: 18px; height: 18px;"></i>
+                            <input type="text" class="input-box-field" id="signup_username" name="username" placeholder="Choose a username" required autocomplete="username">
+                            <button type="button" class="btn-send-code ms-1" id="btnSendCode" onclick="requestCode()">
+                                <i data-lucide="send" style="width: 14px; height: 14px;" class="me-1"></i> Send Code
                             </button>
                         </div>
-                        <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Click "Send Code" to dispatch access code to Admin Telegram.</small>
                     </div>
 
                     <div class="mb-3">
-                        <label for="signup_code" class="form-label small text-muted fw-semibold">6-Digit Admin Verification Code</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i data-lucide="key-round" style="width: 18px;"></i></span>
-                            <input type="text" class="form-control border-start-0 ps-0" id="signup_code" name="code" placeholder="Enter code received from Admin" maxlength="6" required>
+                        <label for="signup_code" class="form-label small fw-semibold text-muted mb-1">6-Digit Verification Code</label>
+                        <div class="input-box-wrapper">
+                            <i data-lucide="key-round" class="input-box-icon" style="width: 18px; height: 18px;"></i>
+                            <input type="text" class="input-box-field" id="signup_code" name="code" placeholder="Enter code received from Admin" maxlength="6" required>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label for="signup_password" class="form-label small text-muted fw-semibold">Password</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0 text-muted"><i data-lucide="lock" style="width: 18px;"></i></span>
-                            <input type="password" class="form-control border-start-0 ps-0" id="signup_password" name="password" placeholder="Create a strong password" minlength="6" required>
+                        <label for="signup_password" class="form-label small fw-semibold text-muted mb-1">Password</label>
+                        <div class="input-box-wrapper">
+                            <i data-lucide="lock" class="input-box-icon" style="width: 18px; height: 18px;"></i>
+                            <input type="password" class="input-box-field" id="signup_password" name="password" placeholder="Create a strong password" minlength="6" required autocomplete="new-password">
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success w-100 py-2 fw-semibold shadow-sm" id="btnCreateAccount">
-                        <i data-lucide="user-plus" style="width: 18px; vertical-align: middle;" class="me-1"></i> Create Account
+                    <button type="submit" class="btn-auth-submit" id="btnCreateAccount">
+                        <i data-lucide="user-plus" style="width: 18px; height: 18px; vertical-align: sub;" class="me-1"></i> Create Account
                     </button>
                 </form>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function showAlert(message, type = 'info') {
             const el = document.getElementById('authAlert');
-            el.className = `alert alert-${type} mt-3 mb-0`;
+            el.className = `alert alert-${type} mb-3 small py-2 px-3 rounded-3`;
             el.innerHTML = message;
             el.classList.remove('d-none');
         }
@@ -219,7 +311,7 @@
 
             const btn = document.getElementById('btnSendCode');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Sending...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Sending...';
 
             fetch('/api/request-code', {
                 method: 'POST',
@@ -229,7 +321,7 @@
             .then(res => res.json())
             .then(data => {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="send" style="width: 15px;"></i> Send Code';
+                btn.innerHTML = '<i data-lucide="send" style="width: 14px; height: 14px;" class="me-1"></i> Send Code';
                 if (data.status === 'success') {
                     showAlert('🔑 ' + data.message, 'success');
                 } else {
@@ -239,7 +331,7 @@
             })
             .catch(err => {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="send" style="width: 15px;"></i> Send Code';
+                btn.innerHTML = '<i data-lucide="send" style="width: 14px; height: 14px;" class="me-1"></i> Send Code';
                 showAlert('Network error requesting verification code.', 'danger');
                 lucide.createIcons();
             });
@@ -253,7 +345,7 @@
 
             const btn = document.getElementById('btnCreateAccount');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Creating Account...';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Creating Account...';
 
             fetch('/signup', {
                 method: 'POST',
@@ -266,7 +358,7 @@
             .then(res => res.json())
             .then(data => {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="user-plus" style="width: 18px; vertical-align: middle;" class="me-1"></i> Create Account';
+                btn.innerHTML = '<i data-lucide="user-plus" style="width: 18px; height: 18px; vertical-align: sub;" class="me-1"></i> Create Account';
                 if (data.status === 'success') {
                     showAlert('🎉 ' + data.message, 'success');
                     setTimeout(() => {
@@ -279,7 +371,7 @@
             })
             .catch(err => {
                 btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="user-plus" style="width: 18px; vertical-align: middle;" class="me-1"></i> Create Account';
+                btn.innerHTML = '<i data-lucide="user-plus" style="width: 18px; height: 18px; vertical-align: sub;" class="me-1"></i> Create Account';
                 showAlert('Network error creating account.', 'danger');
             });
         }
