@@ -1,8 +1,8 @@
 import os
 
 bind = f"0.0.0.0:{os.getenv('PORT', '443')}"
-workers = int(os.getenv("GUNICORN_WORKERS", "2"))
-threads = int(os.getenv("GUNICORN_THREADS", "4"))
+workers = int(os.getenv("GUNICORN_WORKERS", "1"))
+threads = int(os.getenv("GUNICORN_THREADS", "8"))
 timeout = int(os.getenv("GUNICORN_TIMEOUT", "120"))
 keepalive = 5
 accesslog = "-"

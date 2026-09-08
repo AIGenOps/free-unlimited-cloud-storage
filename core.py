@@ -264,6 +264,7 @@ class BotActions:
                 primary_file_id = chunks_info[0]['file_id']
 
             if update_schema:
+                self._schema = self.load_or_reload_schema()
                 if directory == "":
                     self._schema["root"].append(file_info)
                 else:
@@ -285,6 +286,7 @@ class BotActions:
     def delete_file(self, full_path: str, message_id: int, with_out_schema_change: bool = False):
         """Delete a file based on `message_id` and remove its corresponding record from schema completely."""
         try:
+            self._schema = self.load_or_reload_schema()
             target_msg_id = int(message_id)
             file_record = self._ops.find_record_by_attribute(self._schema.copy(), "message_id", target_msg_id)
 
@@ -311,12 +313,16 @@ class BotActions:
                 if with_out_schema_change is True:
                     return True, ""
 
-                # Purge file record from schema recursively by message_id
+                # Purge file record from schema recursively by message_id or chunk message_ids
                 def remove_record_recursively(d):
                     if isinstance(d, dict):
                         for k, v in list(d.items()):
                             if k == "root" and isinstance(v, list):
-                                d["root"] = [f for f in v if str(f.get("message_id")) != str(target_msg_id)]
+                                d["root"] = [
+                                    f for f in v
+                                    if str(f.get("message_id")) != str(target_msg_id)
+                                    and not any(str(chk.get("message_id")) == str(target_msg_id) for chk in f.get("chunks", []))
+                                ]
                             elif isinstance(v, dict):
                                 remove_record_recursively(v)
 
