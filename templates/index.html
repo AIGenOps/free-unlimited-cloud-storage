@@ -1,334 +1,333 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Telegram Cloud Drive</title>
     <link rel="icon" href="/static/icons/cloud-fill.svg" type="image/svg+xml">
     <link rel="stylesheet" href="/static/css/bootstrap.min.css">
     <link rel="stylesheet" href="/static/css/theme.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.css">
     <script src="/static/js/jquery-3.3.1.slim.min.js"></script>
     <script src="/static/js/bootstrap-4.3.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/driver.js@1.0.1/dist/driver.js.iife.js"></script>
 </head>
 <body>
-    <div class="drive-layout">
-        <!-- Sidebar Navigation -->
-        <aside class="drive-sidebar">
-            <div>
-                <div class="d-flex align-items-center gap-2 mb-4 px-2">
-                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i data-lucide="cloud" style="width: 22px; height: 22px;"></i>
-                    </div>
-                    <div>
-                        <h6 class="fw-bold mb-0 text-primary">Telegram Cloud</h6>
-                        <small class="text-muted" style="font-size: 0.72rem;">Encrypted Drive V1.0</small>
-                    </div>
+    <div class="container-fluid max-w-7xl px-md-4">
+        <!-- 1. Top Header Banner -->
+        <header class="top-header-banner">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-circle">
+                    <i data-lucide="cloud" style="width: 26px; height: 26px;"></i>
+                </div>
+                <div>
+                    <h4 class="fw-bold mb-0">Telegram <span class="text-primary">Cloud</span></h4>
+                    <small class="text-muted fw-semibold">Encrypted Drive V1.0</small>
                 </div>
 
-                <nav class="nav flex-column">
-                    <a href="{{ url_for('index') }}" class="sidebar-nav-link active">
-                        <i data-lucide="hard-drive" style="width: 18px;"></i>
-                        <span>My Drive</span>
-                    </a>
-                    <button class="sidebar-nav-link border-0 text-start bg-transparent" onclick="openAnalyticsModal()">
-                        <i data-lucide="pie-chart" style="width: 18px;"></i>
-                        <span>Analytics & Tools</span>
-                    </button>
-                    <button class="sidebar-nav-link border-0 text-start bg-transparent" onclick="triggerAutoSync()">
-                        <i data-lucide="refresh-cw" style="width: 18px;"></i>
-                        <span>Auto-Sync</span>
-                    </button>
-                    <button class="sidebar-nav-link border-0 text-start bg-transparent" data-bs-toggle="modal" data-bs-target="#settingsModal">
-                        <i data-lucide="settings" style="width: 18px;"></i>
-                        <span>
-                            {% if current_user and current_user.is_admin %}
-                                Admin Settings
-                            {% else %}
-                                Settings
-                            {% endif %}
-                        </span>
-                    </button>
-                </nav>
+                <div class="my-drive-active-pill ms-md-3">
+                    <i data-lucide="hard-drive" style="width: 18px;"></i>
+                    <span>My Drive</span>
+                </div>
             </div>
 
-            <div>
-                <!-- Storage Quota Widget -->
-                <div class="card p-3 border-0 bg-dark bg-opacity-25 rounded-3 mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <small class="text-muted fw-semibold">Storage</small>
-                        <small class="fw-bold text-success">{{ total_size }}</small>
-                    </div>
-                    <div class="progress" style="height: 6px;">
-                        <div class="progress-bar bg-success" style="width: 35%;"></div>
-                    </div>
-                    <small class="text-muted mt-2 d-block" style="font-size: 0.7rem;">Unlimited Telegram Cloud</small>
-                </div>
-
-                <!-- Theme Switcher Button -->
-                <button class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-2 mb-2" id="mainThemeBtn" onclick="toggleMainTheme()">
-                    <i data-lucide="moon" id="mainThemeIcon" style="width: 16px;"></i>
-                    <span id="mainThemeText">Dark Theme</span>
+            <!-- Center Quick Navigation Controls -->
+            <div class="center-quick-nav">
+                <button class="center-nav-item" onclick="openAnalyticsModal()">
+                    <i data-lucide="clock" class="mb-1" style="width: 20px;"></i>
+                    <span>Analytics & Tools</span>
+                </button>
+                <div class="center-nav-divider"></div>
+                <button class="center-nav-item" onclick="triggerAutoSync()">
+                    <i data-lucide="refresh-cw" class="mb-1" style="width: 20px;"></i>
+                    <span>Auto-Sync</span>
+                </button>
+                <div class="center-nav-divider"></div>
+                <button class="center-nav-item" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                    <i data-lucide="settings" class="mb-1" style="width: 20px;"></i>
+                    <span>
+                        {% if current_user and current_user.is_admin %}
+                            Admin Settings
+                        {% else %}
+                            Settings
+                        {% endif %}
+                    </span>
                 </button>
             </div>
-        </aside>
+        </header>
 
-        <!-- Main Content Area -->
-        <main class="drive-content">
-            <!-- Top Navbar Bar -->
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-                <!-- Search & Directory Path -->
-                <div class="d-flex align-items-center gap-2 flex-grow-1" style="max-width: 500px;">
-                    <div class="input-group">
-                        <span class="input-group-text bg-dark bg-opacity-25 border-end-0 text-muted"><i data-lucide="search" style="width: 18px;"></i></span>
-                        <input type="text" id="live-search-input" class="form-control border-start-0 ps-0" placeholder="⚡ Search files in Drive...">
-                    </div>
+        <!-- 2. Storage Progress Banner -->
+        <div class="storage-banner-card">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold small">Storage</span>
+                <span class="fw-bold" style="color: #22c55e;">{{ total_size }}</span>
+            </div>
+            <div class="storage-progress-bar mb-2">
+                <div class="storage-progress-fill" style="width: 45%;"></div>
+            </div>
+            <small class="text-white-50" style="font-size: 0.78rem;">Unlimited Telegram Cloud</small>
+        </div>
+
+        <!-- 3. Theme Toggle Button Bar -->
+        <button class="theme-bar-btn" id="themeToggleBarBtn" onclick="toggleMainTheme()">
+            <i data-lucide="sun" id="themeToggleIcon"></i>
+            <span id="themeToggleText">Light Theme</span>
+        </button>
+
+        <!-- 4. Search & Action Controls Row -->
+        <div class="search-action-bar">
+            <!-- Search Group -->
+            <div class="search-input-group">
+                <div class="search-icon-square">
+                    <i data-lucide="search" style="width: 18px;"></i>
                 </div>
+                <input type="text" id="live-search-input" class="search-input-field" placeholder="⚡ Search files in Drive...">
+            </div>
 
-                <!-- View Switcher & Action Controls -->
-                <div class="d-flex align-items-center gap-2">
-                    <!-- Layout Toggle (Grid vs List) -->
-                    <div class="btn-group" role="group" aria-label="Layout Switcher">
-                        <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnViewGrid" onclick="switchView('grid')" title="Grid View">
-                            <i data-lucide="grid" style="width: 16px;"></i>
-                        </button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnViewList" onclick="switchView('list')" title="List View">
-                            <i data-lucide="list" style="width: 16px;"></i>
-                        </button>
-                    </div>
-
-                    <button class="btn btn-primary btn-sm fw-semibold d-flex align-items-center gap-1" onclick="document.getElementById('uf').click()">
-                        <i data-lucide="plus" style="width: 18px;"></i> Upload
+            <!-- View Switcher & Action Controls -->
+            <div class="d-flex align-items-center gap-2">
+                <div class="btn-group" role="group" aria-label="Layout Switcher">
+                    <button type="button" class="btn btn-outline-secondary btn-sm active" id="btnViewGrid" onclick="switchView('grid')" title="Grid View">
+                        <i data-lucide="grid" style="width: 16px;"></i>
                     </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="btnViewList" onclick="switchView('list')" title="List View">
+                        <i data-lucide="list" style="width: 16px;"></i>
+                    </button>
+                </div>
 
-                    <!-- User Profile Pill -->
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i data-lucide="user" style="width: 16px;"></i>
-                            <span>{{ current_user.username if current_user else 'user' }}</span>
-                            {% if current_user and current_user.is_admin %}
-                                <span class="badge bg-purple text-white" style="font-size: 0.65rem;">Admin</span>
-                            {% else %}
-                                <span class="badge bg-info text-dark" style="font-size: 0.65rem;">User</span>
-                            {% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow">
-                            <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#settingsModal"><i data-lucide="settings" class="me-2" style="width: 15px;"></i> Settings</button></li>
-                            <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#infoModal"><i data-lucide="info" class="me-2" style="width: 15px;"></i> System Capabilities</button></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item small text-danger" href="{{ url_for('logout') }}" onclick="return confirm('Log out from drive?')"><i data-lucide="log-out" class="me-2" style="width: 15px;"></i> Log Out</a></li>
-                        </ul>
-                    </div>
+                <button class="btn-upload-bright" onclick="document.getElementById('uf').click()">
+                    <i data-lucide="plus" style="width: 18px;"></i> Upload
+                </button>
+
+                <!-- User Profile Pill -->
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i data-lucide="user" style="width: 16px;"></i>
+                        <span>{{ current_user.username if current_user else 'user' }}</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#settingsModal"><i data-lucide="settings" class="me-2" style="width: 15px;"></i> Settings</button></li>
+                        <li><button class="dropdown-item small" data-bs-toggle="modal" data-bs-target="#infoModal"><i data-lucide="info" class="me-2" style="width: 15px;"></i> System Capabilities</button></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item small text-danger" href="{{ url_for('logout') }}" onclick="return confirm('Log out from drive?')"><i data-lucide="log-out" class="me-2" style="width: 15px;"></i> Log Out</a></li>
+                    </ul>
                 </div>
             </div>
+        </div>
 
-            {% if security_warning %}
-            <div class="alert alert-danger py-2 mb-3"><marquee behavior="" direction="text-left"><b>{{ security_warning }}</b></marquee></div>
-            {% endif %}
-            {% include 'flash.html' %}
+        {% if security_warning %}
+        <div class="alert alert-danger py-2 mb-3"><marquee behavior="" direction="text-left"><b>{{ security_warning }}</b></marquee></div>
+        {% endif %}
+        {% include 'flash.html' %}
 
-            <!-- Quick Metrics Cards -->
-            <div class="row g-3 mb-4" data-tour="metrics">
-                <div class="col-md-3 col-6">
-                    <div class="metric-card d-flex align-items-center gap-3">
-                        <div class="metric-icon icon-purple"><i data-lucide="folder"></i></div>
-                        <div>
-                            <small class="text-muted d-block">Subfolders</small>
-                            <span class="fs-5 fw-bold">{{ folders | length }}</span>
-                            <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_folders_system }} total)</small>
-                        </div>
+        <!-- 5. Metric Cards Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="metric-card-exact">
+                    <div class="metric-square-icon bg-purple-light">
+                        <i data-lucide="folder" style="width: 24px; height: 24px;"></i>
                     </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="metric-card d-flex align-items-center gap-3">
-                        <div class="metric-icon icon-blue"><i data-lucide="file-text"></i></div>
-                        <div>
-                            <small class="text-muted d-block">Files Here</small>
-                            <span class="fs-5 fw-bold">{{ files | length }}</span>
-                            <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_files_system }} total)</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="metric-card d-flex align-items-center gap-3">
-                        <div class="metric-icon icon-green"><i data-lucide="hard-drive"></i></div>
-                        <div>
-                            <small class="text-muted d-block">Storage Consumed</small>
-                            <span class="fs-6 fw-bold text-success">{{ total_size }}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3 col-6">
-                    <div class="metric-card d-flex align-items-center gap-3" onclick="openAnalyticsModal()" style="cursor: pointer;">
-                        <div class="metric-icon icon-cyan"><i data-lucide="pie-chart"></i></div>
-                        <div>
-                            <small class="text-muted d-block">Analytics</small>
-                            <span class="fs-6 fw-bold text-primary">View Stats &rarr;</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Drag & Drop Upload Zone -->
-            <div id="drop-zone" class="dropzone-custom mb-4" data-tour="upload-zone">
-                <p class="mb-1 fw-bold"><i data-lucide="upload-cloud" style="width: 28px; height: 28px; vertical-align: middle;" class="text-primary me-2"></i> <b>Drag & Drop files here</b> or click to upload</p>
-                <small class="text-muted">Target Directory: <code>{{ working_directory if working_directory else 'Root (/)' }}</code></small>
-                <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
-                    <input type="file" name="upload_file" id="uf" multiple style="display: none;" />
-                    <input type="hidden" name="target_directory" id="uploadDirectory" value="{{ working_directory }}"/>
-                </form>
-                <div class="progress mt-3" id="upload-progress-container" style="display: none; height: 25px;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="upload-progress-bar" role="progressbar" style="width: 0%;">0%</div>
-                </div>
-            </div>
-
-            <!-- Breadcrumbs & Category Filter Pills -->
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb mb-0">
-                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}"><i data-lucide="home" style="width: 15px; vertical-align: text-bottom;"></i> Home</a></li>
-                        {% if working_directory != "" %}
-                            {% for path_item, path_str in directory_parts %}
-                                <li class="breadcrumb-item"><a href="{{ url_for('index') }}?target_directory={{ path_str | urlencode }}">{{ path_item }}</a></li>
-                            {% endfor %}
-                        {% endif %}
-                    </ol>
-                </nav>
-
-                <div class="btn-group flex-wrap" role="group" aria-label="Category Filters">
-                    <button type="button" class="btn btn-outline-primary btn-sm active category-btn" data-category="all">All</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="images">Images</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="videos">Videos</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="audio">Audio</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="documents">Documents</button>
-                    <button type="button" class="btn btn-outline-primary btn-sm category-btn" data-category="archives">Archives</button>
-                </div>
-            </div>
-
-            <!-- VIEW MODE 1: GRID VIEW (Default) -->
-            <div id="driveGridView" class="drive-grid-container mb-4">
-                <!-- Folder Cards -->
-                {% for folder in folders %}
-                <div class="drive-card folder-row">
-                    <div class="d-flex align-items-center gap-2 mb-3">
-                        <i data-lucide="folder" class="text-warning" style="width: 32px; height: 32px;"></i>
-                        <div class="text-truncate">
-                            <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none text-reset text-truncate d-block">{{ folder }}</a>
-                            <small class="text-muted d-block">Directory</small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-sm btn-outline-primary w-100 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
-                        <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
-                            <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')"><i data-lucide="trash-2" style="width: 14px;"></i></button>
-                        </form>
-                    </div>
-                </div>
-                {% endfor %}
-
-                <!-- File Cards -->
-                {% for file_info in files %}
-                <div class="drive-card file-row" data-filename="{{ file_info.filename | lower }}">
                     <div>
-                        <div class="drive-card-preview">
-                            <i data-lucide="file-text" class="text-primary" style="width: 48px; height: 48px;"></i>
-                        </div>
-                        <h6 class="fw-bold text-truncate mb-1" title="{{ file_info.filename }}">{{ file_info.filename }}</h6>
-                        <small class="badge bg-secondary mb-3">{{ file_info.size }}</small>
-                    </div>
-                    <div class="d-flex flex-wrap gap-1">
-                        <button class="btn btn-sm btn-info text-white preview-btn flex-grow-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px;"></i></button>
-                        <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-primary flex-grow-1"><i data-lucide="download" style="width: 14px;"></i></a>
-                        <form action="{{ url_for('share_file') }}" method="post" class="d-inline">
-                            <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px;"></i></button>
-                        </form>
-                        <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline">
-                            <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
-                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px;"></i></button>
-                        </form>
+                        <small class="text-muted d-block fw-semibold">Subfolders</small>
+                        <span class="fs-5 fw-bold">{{ folders | length }}</span>
+                        <small class="text-muted ms-1" style="font-size: 0.75rem;">({{ total_folders_system }} total)</small>
                     </div>
                 </div>
-                {% endfor %}
             </div>
+            <div class="col-md-3 col-6">
+                <div class="metric-card-exact">
+                    <div class="metric-square-icon bg-blue-light">
+                        <i data-lucide="file-text" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold">Files Here</small>
+                        <span class="fs-5 fw-bold">{{ files | length }}</span>
+                        <small class="text-muted ms-1" style="font-size: 0.75rem;">({{ total_files_system }} total)</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="metric-card-exact">
+                    <div class="metric-square-icon bg-green-light">
+                        <i data-lucide="hard-drive" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold">Storage Consumed</small>
+                        <span class="fs-5 fw-bold" style="color: #16a34a;">{{ total_size }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="metric-card-exact" onclick="openAnalyticsModal()" style="cursor: pointer;">
+                    <div class="metric-square-icon bg-cyan-light">
+                        <i data-lucide="pie-chart" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <small class="text-muted d-block fw-semibold">Analytics</small>
+                        <span class="fs-6 fw-bold text-primary">View Stats &rarr;</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <!-- VIEW MODE 2: LIST VIEW -->
-            <div id="driveListView" class="table-desktop-view mb-4" style="display: none;">
-                <div class="table-responsive rounded-3 border">
-                    <table class="table table-hover align-middle mb-0" id="filesTable">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Name</th>
-                                <th>Size</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for folder in folders %}
-                            <tr class="folder-row">
-                                <td colspan="2">
-                                    <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none">
-                                        <i data-lucide="folder" class="text-warning me-2"></i> {{ folder }}
-                                    </a>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary me-1 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
-                                    <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
-                                        <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for file_info in files %}
-                            <tr class="file-row" data-filename="{{ file_info.filename | lower }}">
-                                <td><i data-lucide="file-text" class="text-primary me-2"></i> {{ file_info.filename }}</td>
-                                <td><span class="badge bg-secondary">{{ file_info.size }}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px;"></i> Preview</button>
-                                    <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-outline-primary me-1"><i data-lucide="download" style="width: 14px;"></i> Download</a>
-                                    <form action="{{ url_for('share_file') }}" method="post" class="d-inline me-1">
-                                        <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
-                                        <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px;"></i> Share</button>
-                                    </form>
-                                    <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline">
-                                        <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
-                                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px;"></i> Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+        <!-- 6. Drag & Drop Upload Zone -->
+        <div id="drop-zone" class="exact-dropzone">
+            <p class="mb-1 fw-bold text-dark">
+                <i data-lucide="upload-cloud" style="width: 32px; height: 32px; vertical-align: middle;" class="text-primary me-2"></i>
+                <b>Drag & Drop files here</b> or click to upload
+            </p>
+            <small class="text-muted">Target Directory: <span class="text-danger fw-semibold">Root ({{ working_directory if working_directory else '/' }})</span></small>
+            <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+                <input type="file" name="upload_file" id="uf" multiple style="display: none;" />
+                <input type="hidden" name="target_directory" id="uploadDirectory" value="{{ working_directory }}"/>
+            </form>
+            <div class="progress mt-3" id="upload-progress-container" style="display: none; height: 22px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-success fw-bold" id="upload-progress-bar" role="progressbar" style="width: 0%;">0%</div>
+            </div>
+        </div>
+
+        <!-- 7. Filter & Segment Bar -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+            <a href="{{ url_for('index') }}" class="btn btn-sm btn-light border text-primary fw-semibold px-3 py-2 rounded-3 d-inline-flex align-items-center gap-1">
+                <i data-lucide="home" style="width: 16px;"></i> Home
+            </a>
+
+            <div class="segmented-category-bar">
+                <button type="button" class="segmented-btn active category-btn" data-category="all">All</button>
+                <button type="button" class="segmented-btn category-btn" data-category="images">Images</button>
+                <button type="button" class="segmented-btn category-btn" data-category="videos">Videos</button>
+                <button type="button" class="segmented-btn category-btn" data-category="audio">Audio</button>
+                <button type="button" class="segmented-btn category-btn" data-category="documents">Documents</button>
+                <button type="button" class="segmented-btn category-btn" data-category="archives">Archives</button>
+            </div>
+        </div>
+
+        <!-- 8. Grid View File Cards (Exact match to reference image) -->
+        <div id="driveGridView" class="exact-grid-container">
+            <!-- Folders -->
+            {% for folder in folders %}
+            <div class="exact-file-card folder-row">
+                <div class="exact-card-top-content">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <i data-lucide="folder" class="text-warning" style="width: 32px; height: 32px;"></i>
+                        <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none text-dark text-truncate d-block">{{ folder }}</a>
+                    </div>
+                </div>
+                <div class="d-flex gap-1 p-2 border-top">
+                    <button class="btn btn-sm btn-outline-primary w-100 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
+                    <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
+                        <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')"><i data-lucide="trash-2" style="width: 14px;"></i></button>
+                    </form>
                 </div>
             </div>
-        </main>
+            {% endfor %}
+
+            <!-- Files -->
+            {% for file_info in files %}
+            <div class="exact-file-card file-row" data-filename="{{ file_info.filename | lower }}">
+                <div class="exact-card-top-content">
+                    <div class="d-flex align-items-start gap-2 mb-2">
+                        <i data-lucide="file-text" class="text-primary flex-shrink-0 mt-1" style="width: 28px; height: 28px;"></i>
+                        <div class="text-truncate">
+                            <h6 class="fw-bold text-dark text-truncate mb-1" title="{{ file_info.filename }}">{{ file_info.filename }}</h6>
+                            <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.72rem;">{{ file_info.size }}</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Bottom Action Strip -->
+                <div class="exact-card-action-strip">
+                    <button class="btn-action-preview preview-btn" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}" title="Preview">
+                        <i data-lucide="eye" style="width: 18px;"></i>
+                    </button>
+                    <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn-action-download" title="Download">
+                        <i data-lucide="download" style="width: 18px;"></i>
+                    </a>
+                    <form action="{{ url_for('share_file') }}" method="post" class="d-inline m-0 p-0 flex-1">
+                        <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
+                        <button type="submit" class="btn-action-share w-100" onclick="return confirm('Share file?')" title="Share">
+                            <i data-lucide="share-2" style="width: 18px;"></i>
+                        </button>
+                    </form>
+                    <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline m-0 p-0 flex-1">
+                        <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
+                        <button type="submit" class="btn-action-delete w-100" onclick="return confirm('Delete file permanently?')" title="Delete">
+                            <i data-lucide="trash-2" style="width: 18px;"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- LIST VIEW -->
+        <div id="driveListView" class="mb-4" style="display: none;">
+            <div class="table-responsive rounded-3 border bg-white shadow-sm">
+                <table class="table table-hover align-middle mb-0" id="filesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Filename</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for folder in folders %}
+                        <tr class="folder-row">
+                            <td colspan="2">
+                                <a href="{{ url_for('index') }}?target_directory={{ (working_directory ~ '/' ~ folder) | urlencode }}" class="fw-bold text-decoration-none">
+                                    <i data-lucide="folder" class="text-warning me-2"></i> {{ folder }}
+                                </a>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1 move-btn" data-folder="{{ working_directory }}/{{ folder }}" data-bs-toggle="modal" data-bs-target="#moveModal">Move</button>
+                                <form action="{{ url_for('delete_folder') }}" method="post" class="d-inline">
+                                    <input type="text" name="delete_folder" value="{{ working_directory }}/{{ folder }}" hidden/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete folder?')">Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for file_info in files %}
+                        <tr class="file-row" data-filename="{{ file_info.filename | lower }}">
+                            <td><i data-lucide="file-text" class="text-primary me-2"></i> {{ file_info.filename }}</td>
+                            <td><span class="badge bg-secondary">{{ file_info.size }}</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 14px;"></i> Preview</button>
+                                <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-sm btn-outline-primary me-1"><i data-lucide="download" style="width: 14px;"></i> Download</a>
+                                <form action="{{ url_for('share_file') }}" method="post" class="d-inline me-1">
+                                    <input type="text" name="file_id" value="{{ file_info.file_id }}" hidden/>
+                                    <button type="submit" class="btn btn-sm btn-outline-info" onclick="return confirm('Share file?')"><i data-lucide="share-2" style="width: 14px;"></i> Share</button>
+                                </form>
+                                <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" class="d-inline">
+                                    <input type="text" name="target_directory" value="{{ working_directory }}" hidden/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete file?')"><i data-lucide="trash-2" style="width: 14px;"></i> Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     {% include 'settings_modal.html' %}
     {% include 'info_modal.html' %}
 
     <!-- Move Folder Modal -->
-    <div class="modal fade" id="moveModal" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal fade" id="moveModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content glass-modal">
                 <div class="modal-header border-bottom border-secondary border-opacity-25">
                     <h5 class="modal-title fw-bold">Move Folder</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <label for="targetFolder" class="form-label small text-muted">Enter target folder (leave blank for Root):</label>
+                    <label for="targetFolder" class="form-label small text-muted">Target folder (leave blank for Root):</label>
                     <input type="text" class="form-control mb-3" id="targetFolder" placeholder="Path to folder...">
-
                     <label for="newNameForMovedFolder" class="form-label small text-muted">Rename folder (optional):</label>
                     <input type="text" class="form-control mb-3" id="newNameForMovedFolder">
-
-                    <small class="text-muted">Pro Tip: To rename in-place, enter current path as target folder and specify new name.</small>
                 </div>
                 <div class="modal-footer border-top border-secondary border-opacity-25">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -381,18 +380,18 @@
 
     function toggleMainTheme() {
         const html = document.documentElement;
-        const currentTheme = html.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        const currentTheme = html.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         html.setAttribute('data-theme', newTheme);
         localStorage.setItem('telegram_cloud_theme', newTheme);
 
-        const icon = document.getElementById('mainThemeIcon');
-        const text = document.getElementById('mainThemeText');
+        const icon = document.getElementById('themeToggleIcon');
+        const text = document.getElementById('themeToggleText');
         if (newTheme === 'light') {
-            icon.setAttribute('data-lucide', 'sun');
+            if (icon) icon.setAttribute('data-lucide', 'sun');
             if (text) text.innerText = 'Light Theme';
         } else {
-            icon.setAttribute('data-lucide', 'moon');
+            if (icon) icon.setAttribute('data-lucide', 'moon');
             if (text) text.innerText = 'Dark Theme';
         }
         lucide.createIcons();
@@ -471,10 +470,10 @@
         const savedView = localStorage.getItem('telegram_cloud_view') || 'grid';
         switchView(savedView);
 
-        const savedTheme = localStorage.getItem('telegram_cloud_theme') || 'dark';
+        const savedTheme = localStorage.getItem('telegram_cloud_theme') || 'light';
         document.documentElement.setAttribute('data-theme', savedTheme);
-        const icon = document.getElementById('mainThemeIcon');
-        const text = document.getElementById('mainThemeText');
+        const icon = document.getElementById('themeToggleIcon');
+        const text = document.getElementById('themeToggleText');
         if (savedTheme === 'light') {
             if (icon) icon.setAttribute('data-lucide', 'sun');
             if (text) text.innerText = 'Light Theme';
