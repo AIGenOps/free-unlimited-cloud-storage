@@ -1,0 +1,11 @@
+python-telegram-bot==13.2
+flask==2.2.5
+werkzeug==2.3.8
+python-dotenv==0.20.0
+hurry.filesize==0.9
+pathvalidate==3.2.0
+Flask-Login==0.6.3
+cryptography==41.0.7
+gunicorn==21.2.0
+requests==2.31.0
+

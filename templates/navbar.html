@@ -1,0 +1,29 @@
+<nav class="navbar navbar-expand-lg fixed-top navbar-custom">
+    <div class="container-fluid">
+        <a class="navbar-brand-custom" href="{{ url_for('index') }}">
+            <i data-lucide="cloud" class="text-primary me-1" style="width: 24px; height: 24px; vertical-align: middle;"></i> <span>TelegramCloud</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+          <div class="navbar-nav ms-2 align-items-center">
+            <a class="nav-link-custom" href="{{ url_for('index') }}"><i data-lucide="home" style="width: 18px; height: 18px;"></i> Home</a>
+            <button class="nav-link-custom btn btn-link" style="text-decoration:none;" onclick="openAnalyticsModal()"><i data-lucide="bar-chart-2" style="width: 18px; height: 18px;"></i> Analytics</button>
+            <button class="nav-link-custom btn btn-link" style="text-decoration:none;" onclick="triggerAutoSync()"><i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i> Auto-Sync</button>
+            <button class="nav-link-custom btn btn-link" style="text-decoration:none;" onclick="triggerAutoBackup()"><i data-lucide="shield-check" style="width: 18px; height: 18px;"></i> Auto-Backup</button>
+            <a href="/bulk-upload/" class="nav-link-custom"><i data-lucide="folder-up" style="width: 18px; height: 18px;"></i> Bulk Upload</a>
+            <a href="/persist/upload/" class="nav-link-custom" onclick="return confirm('Upload current schema.json to cloud?')"><i data-lucide="database" style="width: 18px; height: 18px;"></i> Persist</a>
+            <a href="/persist/download/" class="nav-link-custom"><i data-lucide="download-cloud" style="width: 18px; height: 18px;"></i> Recover</a>
+            <a href="/validate/" class="nav-link-custom text-primary" onclick="return confirm('Re-validate entire schema with cloud?')"><i data-lucide="check-circle-2" style="width: 18px; height: 18px;"></i> Re-Validate</a>
+            <button class="nav-link-custom btn btn-link text-info" style="text-decoration:none;" data-toggle="modal" data-target="#infoModal" data-bs-toggle="modal" data-bs-target="#infoModal"><i data-lucide="info" style="width: 18px; height: 18px;"></i> Info</button>
+            <button class="nav-link-custom btn btn-link text-warning" style="text-decoration:none;" onclick="startOnboardingTour()"><i data-lucide="compass" style="width: 18px; height: 18px;"></i> Tour</button>
+          </div>
+        </div>
+        <a href="/logout" class="btn btn-modern btn-modern-danger ms-auto d-none d-md-inline-flex" onclick="return confirm('Are you sure you want to logout?')">Logout <i data-lucide="log-out" style="width: 16px; height: 16px;"></i></a>
+    </div>
+</nav>
+
+{% include 'info_modal.html' %}
+
+<br><br>

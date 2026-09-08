@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
+    <!-- Bootstrap CSS CDN link -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css"></link>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    {% include 'flash.html' %}
+    <div class="container mt-4">
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Error</h4>
+            <p>{{ error_message }}</p>
+            <hr>
+            <p class="mb-0">Please go back and try again.</p>
+            <br>
+            <a class="btn btn-primary" href="{{ url_for('index') }}" role="button">Go to HomePage</a>
+        </div>
+    </div>
+</body>
+</html>

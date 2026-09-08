@@ -1,0 +1,114 @@
+<!-- Info & Help Modal -->
+<div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header modal-header-custom d-flex align-items-center justify-content-between">
+                <h5 class="modal-title font-weight-bold text-dark d-flex align-items-center gap-2" id="infoModalLabel">
+                    <i data-lucide="info" class="text-primary"></i> TelegramCloud — Info & Capabilities
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" style="max-height: 75vh; overflow-y: auto;">
+                <!-- Overview Banner -->
+                <div class="card border-0 mb-4 p-3 rounded-3" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%); border-left: 4px solid #4f46e5 !important;">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="p-2 rounded-2 bg-primary text-white">
+                            <i data-lucide="cloud" style="width: 24px; height: 24px;"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark">Unlimited Cloud Storage Infrastructure</h6>
+                            <p class="small text-muted mb-0">TelegramCloud converts your private Telegram Channel into an encrypted, high-performance cloud drive with unlimited capacity, fast upload/download streams, and automated sync tools.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feature Grid -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 h-100 bg-white shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
+                                <i data-lucide="lock" style="width: 18px; height: 18px;"></i>
+                                <span>AES-256 Binary Encryption</span>
+                            </div>
+                            <p class="small text-muted mb-0">Files are encrypted before transmission using industry-standard cryptography, guaranteeing privacy for stored documents, media, and archives.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 h-100 bg-white shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
+                                <i data-lucide="layers" style="width: 18px; height: 18px;"></i>
+                                <span>Large File Chunking (>19.5MB)</span>
+                            </div>
+                            <p class="small text-muted mb-0">Files exceeding Telegram limits are seamlessly split into 19.5MB parts, uploaded concurrently with progress reporting, and automatically reassembled upon download or preview.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 h-100 bg-white shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
+                                <i data-lucide="refresh-cw" style="width: 18px; height: 18px;"></i>
+                                <span>Auto-Sync & Backup</span>
+                            </div>
+                            <p class="small text-muted mb-0">Sync changes directly with Telegram channel updates (`/sync`) and persist catalog metadata backups (`/backup`) safely inside Telegram storage.</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="p-3 border rounded-3 h-100 bg-white shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-primary fw-bold">
+                                <i data-lucide="smartphone" style="width: 18px; height: 18px;"></i>
+                                <span>Mobile Web App Ready</span>
+                            </div>
+                            <p class="small text-muted mb-0">Optimized PWA interface with fixed bottom navigation, touch action cards, quick-upload floating action button, and touch gesture support.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Telegram Bot Commands -->
+                <h6 class="fw-bold mb-3 text-dark d-flex align-items-center gap-2">
+                    <i data-lucide="bot" class="text-primary"></i> Telegram Bot Commands
+                </h6>
+                <div class="table-responsive mb-4">
+                    <table class="table table-sm table-bordered mb-0 small">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Command</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>/storage</code></td>
+                                <td>Returns live storage stats (total files, folders, consumed space).</td>
+                            </tr>
+                            <tr>
+                                <td><code>/search &lt;filename&gt;</code></td>
+                                <td>Searches files matching name query in Telegram catalog.</td>
+                            </tr>
+                            <tr>
+                                <td><code>/backup</code></td>
+                                <td>Backs up entire `schema.json` to the Telegram storage channel.</td>
+                            </tr>
+                            <tr>
+                                <td><code>/sync</code></td>
+                                <td>Scans Telegram channel messages and synchronizes local catalog.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Quick Tips -->
+                <div class="alert alert-info py-2 px-3 small mb-0 d-flex align-items-center justify-content-between">
+                    <span>💡 <b>Pro Tip:</b> Drag and drop multiple files anywhere in the dropzone for live NDJSON upload progress tracking!</span>
+                    <button class="btn btn-sm btn-primary ms-3" onclick="if(typeof bootstrap !== 'undefined' && bootstrap.Modal){ const m = bootstrap.Modal.getInstance(document.getElementById('infoModal')); if(m) m.hide(); } else { $('#infoModal').modal('hide'); } startOnboardingTour();">
+                        <i data-lucide="compass" style="width: 14px; height: 14px;"></i> Start Tour
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer bg-light px-4 py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

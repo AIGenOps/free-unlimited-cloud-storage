@@ -1,0 +1,23 @@
+services:
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    hostname: bot
+    env_file:
+      - .env
+    volumes:
+      - schemaVol:/svc/schema/
+    networks:
+      - appNetwork
+
+
+networks:
+  appNetwork:
+
+volumes:
+  schemaVol:
