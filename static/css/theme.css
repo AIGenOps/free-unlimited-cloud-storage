@@ -392,3 +392,38 @@ body {
     text-shadow: none !important;
 }
 
+/* Custom Tooltip & Micro Hover Card Styling */
+.tooltip-inner {
+    background-color: rgba(15, 23, 42, 0.94) !important;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: #f8fafc !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+    max-width: 240px !important;
+    text-align: center !important;
+    line-height: 1.4 !important;
+}
+
+.bs-tooltip-auto[x-placement^=top] .arrow::before, .bs-tooltip-top .arrow::before {
+    border-top-color: rgba(15, 23, 42, 0.94) !important;
+}
+.bs-tooltip-auto[x-placement^=bottom] .arrow::before, .bs-tooltip-bottom .arrow::before {
+    border-bottom-color: rgba(15, 23, 42, 0.94) !important;
+}
+.bs-tooltip-auto[x-placement^=left] .arrow::before, .bs-tooltip-left .arrow::before {
+    border-left-color: rgba(15, 23, 42, 0.94) !important;
+}
+.bs-tooltip-auto[x-placement^=right] .arrow::before, .bs-tooltip-right .arrow::before {
+    border-right-color: rgba(15, 23, 42, 0.94) !important;
+}
+
+[title], [data-bs-toggle="tooltip"], [data-toggle="tooltip"] {
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+

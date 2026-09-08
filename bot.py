@@ -161,25 +161,34 @@ def block_on_validation_in_progress():
 @login_required
 def index():
     block_on_validation_in_progress()
-    _, security_warning = bot.get_active_users_in_channel()  # Security warning is displayed in index page if not none.
-    directory = request.args.get('target_directory', None)  # Directory to navigate to.
-    if directory is None:   # If dir not specified, use home.
+    _, security_warning = bot.get_active_users_in_channel()
+    analytics = bot.get_storage_analytics()
+    total_size_fmt = analytics.get("total_size_formatted", "0 KB")
+    total_files_sys = analytics.get("total_files", 0)
+    total_folders_sys = analytics.get("total_folders", 0)
+    last_val = bot._schema.get("meta", {}).get("last_validated", "Live")
+    if isinstance(last_val, float):
+        last_val = str(datetime.fromtimestamp(last_val))
+
+    directory = request.args.get('target_directory', None)
+    if directory is None:
         folders = list(bot._schema.keys())
-        folders.remove("root")  # reserved for storing files.
-        folders.remove("meta")  # reserved for metadata in root.
-        return render_template('index.html', files=bot._schema["root"], folders=folders, working_directory="", total_size=bot._schema["meta"]["total_size"], last_validated=str(datetime.fromtimestamp(bot._schema["meta"]["last_validated"])) if isinstance(bot._schema["meta"]["last_validated"], float) else bot._schema["meta"]["last_validated"], security_warning=security_warning)
-    else:   # BUG: Write re-usable function to sanitize file paths.
-        _, ret_structure, err = bot._ops.get_contents_in_directory(directory, bot._schema.copy(), files_only=False)  # get dict item from schema in a given directory path. COntains both files and folders.
+        if "root" in folders: folders.remove("root")
+        if "meta" in folders: folders.remove("meta")
+        return render_template('index.html', files=bot._schema["root"], folders=folders, working_directory="", total_size=total_size_fmt, total_files_system=total_files_sys, total_folders_system=total_folders_sys, last_validated=last_val, security_warning=security_warning)
+    else:
+        _, ret_structure, err = bot._ops.get_contents_in_directory(directory, bot._schema.copy(), files_only=False)
         if ret_structure is not False:
             folders = list(ret_structure.keys())
-            folders.remove("root")
+            if "root" in folders: folders.remove("root")
+            if "meta" in folders: folders.remove("meta")
             directory_parts = []
             path_str = ""
-            for path_item in directory.split('/'):  # Building breadcrumb target_directory paths for easy navigation.
-                if path_item != "":  # If path_item is "", an extra / is displayed in breadcrumb. We don;t even allow empty folder names to be created anyway.
+            for path_item in directory.split('/'):
+                if path_item != "":
                     path_str = path_str + '/' + path_item
-                    directory_parts.append((path_item, path_str))   # read same way in template. path_item is folder name displayed in bread crumb (ex: sample), path_str is full path to reach that folder (ex: /bkp/folder/sample).
-            return render_template('index.html', files=ret_structure["root"], folders=folders, working_directory=directory, directory_parts=directory_parts, security_warning=security_warning)   # working_directory is passed so that delete requests, further folder navigation is based on this current working directory.
+                    directory_parts.append((path_item, path_str))
+            return render_template('index.html', files=ret_structure["root"], folders=folders, working_directory=directory, directory_parts=directory_parts, total_size=total_size_fmt, total_files_system=total_files_sys, total_folders_system=total_folders_sys, last_validated=last_val, security_warning=security_warning)
         return jsonify({"error": err})
 
 @app.route('/bulk-upload/', methods=['GET'])    # For full folder uploads.

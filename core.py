@@ -62,11 +62,22 @@ class BotActions:
             logger.info("Schema.json not found in local directory, creating new empty schema.")
             return {'root': [], "meta": {"total_size": 0, "last_validated": "Unavailable! Please Revalidate schema."}}
 
+    def update_schema_total_size(self):
+        """Recalculate total consumed space from all files in schema and update meta.total_size."""
+        try:
+            analytics = self.get_storage_analytics()
+            if "meta" not in self._schema:
+                self._schema["meta"] = {"total_size": "0 KB", "last_validated": "Never"}
+            self._schema["meta"]["total_size"] = analytics.get("total_size_formatted", "0 KB")
+        except Exception as e:
+            logger.error(f"Error updating schema total size: {e}")
+
     def save_schema(self, file_content_bytes: bytes = None):
         with self._schema_lock:
             try:
                 if file_content_bytes is not None:  # If file is specified explicitly as byte array.
                     self._schema = json.loads(file_content_bytes.decode('utf8'))    # load bytes as str and then to dictionary.
+                self.update_schema_total_size()
                 dir_name = os.path.dirname(self._schema_filepath) or "."
                 os.makedirs(dir_name, exist_ok=True)
                 with tempfile.NamedTemporaryFile('w', dir=dir_name, delete=False, encoding='utf-8') as tf:

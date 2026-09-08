@@ -52,34 +52,36 @@
     <!-- Metrics Bar -->
     <div class="row mb-4" data-tour="metrics">
         <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3">
+            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Subfolders in current location (Total {{ total_folders_system }} across system catalog)">
                 <div class="metric-icon icon-purple"><i data-lucide="folder"></i></div>
                 <div>
                     <small class="text-muted d-block">Subfolders</small>
                     <span class="fs-5 fw-bold">{{ folders | length }}</span>
+                    <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_folders_system }} overall)</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3">
+            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Files in current location (Total {{ total_files_system }} across system catalog)">
                 <div class="metric-icon icon-blue"><i data-lucide="file-text"></i></div>
                 <div>
                     <small class="text-muted d-block">Files Here</small>
                     <span class="fs-5 fw-bold">{{ files | length }}</span>
+                    <small class="text-muted ms-1" style="font-size: 0.7rem;">({{ total_files_system }} overall)</small>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3">
+            <div class="metric-card d-flex align-items-center gap-3" data-toggle="tooltip" data-bs-toggle="tooltip" title="Real-time live storage space consumed by all files in your Telegram Channel">
                 <div class="metric-icon icon-green"><i data-lucide="hard-drive"></i></div>
                 <div>
                     <small class="text-muted d-block">Storage Consumed</small>
-                    <span class="fs-6 fw-bold">{{ total_size if total_size else 'Unknown' }}</span>
+                    <span class="fs-6 fw-bold text-success">{{ total_size if total_size else '0 KB' }}</span>
                 </div>
             </div>
         </div>
         <div class="col-md-3 col-6 mb-2">
-            <div class="metric-card d-flex align-items-center gap-3" onclick="openAnalyticsModal()" style="cursor: pointer;">
+            <div class="metric-card d-flex align-items-center gap-3" onclick="openAnalyticsModal()" style="cursor: pointer;" data-toggle="tooltip" data-bs-toggle="tooltip" title="Open storage visualizer pie chart, category breakdown, & duplicate file scanner">
                 <div class="metric-icon icon-cyan"><i data-lucide="pie-chart"></i></div>
                 <div>
                     <small class="text-muted d-block">Analytics & Tools</small>
@@ -90,7 +92,7 @@
     </div>
 
     <!-- Drag & Drop Uploader -->
-    <div id="drop-zone" class="dropzone-custom mb-4" data-tour="upload-zone">
+    <div id="drop-zone" class="dropzone-custom mb-4" data-tour="upload-zone" data-toggle="tooltip" data-bs-toggle="tooltip" title="Drag & drop single or multiple files here to upload with live NDJSON streaming progress">
 
         <p class="mb-1 fw-bold"><i data-lucide="upload-cloud" style="width: 28px; height: 28px; vertical-align: middle;" class="text-primary me-2"></i> <b>Drag & Drop files here</b> or click to upload</p>
         <small class="text-muted">Target Directory: <code>{{ working_directory if working_directory else 'Root (/)' }}</code></small>
@@ -115,7 +117,7 @@
         <div class="col-md-6 mb-2 mb-md-0">
             <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ url_for('index') }}"> <i data-lucide="home" style="width: 16px; height: 16px; vertical-align: middle;"></i> Home</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('index') }}" data-toggle="tooltip" data-bs-toggle="tooltip" title="Return to Root (/) homepage"> <i data-lucide="home" style="width: 16px; height: 16px; vertical-align: middle;"></i> Home</a></li>
                 {% if working_directory != "" %}
                     {% for path_item, path_str in directory_parts %}
                         <li class="breadcrumb-item"><a href="{{ url_for('index') }}?target_directory={{ path_str | urlencode }}">{{ path_item }}</a></li>
@@ -125,18 +127,18 @@
             </nav>
         </div>
         <div class="col-md-6 text-right" data-tour="search-bar">
-            <input type="text" id="live-search-input" class="form-control" placeholder="⚡ Live search files in directory...">
+            <input type="text" id="live-search-input" class="form-control" placeholder="⚡ Live search files in directory..." data-toggle="tooltip" data-bs-toggle="tooltip" title="Type any keyword or filename to instantly filter files in real-time">
         </div>
     </div>
 
     <!-- Category Filter Buttons -->
     <div class="btn-group mb-3 d-flex flex-wrap" role="group" aria-label="Category Filters">
-        <button type="button" class="btn btn-outline-primary active category-btn" data-category="all"><i data-lucide="layers" style="width: 15px; height: 15px;"></i> All</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="images"><i data-lucide="image" style="width: 15px; height: 15px;"></i> Images</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="videos"><i data-lucide="video" style="width: 15px; height: 15px;"></i> Videos</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="audio"><i data-lucide="music" style="width: 15px; height: 15px;"></i> Audio</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="documents"><i data-lucide="file-text" style="width: 15px; height: 15px;"></i> Documents</button>
-        <button type="button" class="btn btn-outline-primary category-btn" data-category="archives"><i data-lucide="archive" style="width: 15px; height: 15px;"></i> Archives</button>
+        <button type="button" class="btn btn-outline-primary active category-btn" data-category="all" data-toggle="tooltip" data-bs-toggle="tooltip" title="Show all files regardless of file extension"><i data-lucide="layers" style="width: 15px; height: 15px;"></i> All</button>
+        <button type="button" class="btn btn-outline-primary category-btn" data-category="images" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter image files (.png, .jpg, .jpeg, .gif, .webp, .svg)"><i data-lucide="image" style="width: 15px; height: 15px;"></i> Images</button>
+        <button type="button" class="btn btn-outline-primary category-btn" data-category="videos" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter video files (.mp4, .mkv, .webm, .avi, .mov)"><i data-lucide="video" style="width: 15px; height: 15px;"></i> Videos</button>
+        <button type="button" class="btn btn-outline-primary category-btn" data-category="audio" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter audio files (.mp3, .wav, .flac, .ogg, .m4a)"><i data-lucide="music" style="width: 15px; height: 15px;"></i> Audio</button>
+        <button type="button" class="btn btn-outline-primary category-btn" data-category="documents" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter document files (.pdf, .doc, .docx, .txt, .json, .csv, .xlsx)"><i data-lucide="file-text" style="width: 15px; height: 15px;"></i> Documents</button>
+        <button type="button" class="btn btn-outline-primary category-btn" data-category="archives" data-toggle="tooltip" data-bs-toggle="tooltip" title="Filter compressed archives (.zip, .rar, .7z, .tar, .gz)"><i data-lucide="archive" style="width: 15px; height: 15px;"></i> Archives</button>
     </div>
 
     <!-- Desktop Table View -->
@@ -170,15 +172,15 @@
                         <td><i data-lucide="file-text" class="text-primary me-1"></i> {{ file_info.filename }}</td>
                         <td>{{ file_info.size }}</td>
                         <td>
-                            <button class="btn btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}"><i data-lucide="eye" style="width: 15px; height: 15px;"></i> Preview</button>
+                            <button class="btn btn-outline-info preview-btn me-1" data-fileid="{{ file_info.file_id }}" data-filename="{{ file_info.filename }}" data-toggle="tooltip" data-bs-toggle="tooltip" title="Stream and preview media or document directly in browser"><i data-lucide="eye" style="width: 15px; height: 15px;"></i> Preview</button>
                             <form action="{{ url_for('share_file') }}" method="post" style="display: inline;">
                                 <input type="text" name="file_id", value="{{ file_info.file_id }}", hidden/>
-                                <button type="submit" class="btn btn-outline-info" onclick="return confirm('Are you sure want to share this file?')"><i data-lucide="share-2" style="width: 15px; height: 15px;"></i> Share</button>
+                                <button type="submit" class="btn btn-outline-info" onclick="return confirm('Are you sure want to share this file?')" data-toggle="tooltip" data-bs-toggle="tooltip" title="Generate a public download link (expires in 100 mins)"><i data-lucide="share-2" style="width: 15px; height: 15px;"></i> Share</button>
                             </form>
-                            <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-outline-primary"><i data-lucide="download" style="width: 15px; height: 15px;"></i> Download</a>
+                            <a href="{{ url_for('file_download', file_id=file_info.file_id) }}" class="btn btn-outline-primary" data-toggle="tooltip" data-bs-toggle="tooltip" title="Download file directly from your encrypted Telegram cloud channel"><i data-lucide="download" style="width: 15px; height: 15px;"></i> Download</a>
                             <form action="{{ url_for('delete', message_id=file_info.message_id) }}" method="post" style="display: inline;">
                                 <input type="text" name="target_directory" id="deleteFromDirectory", value="{{ working_directory }}", hidden/>
-                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure want to delete this file?')"><i data-lucide="trash-2" style="width: 15px; height: 15px;"></i> Delete</button>
+                                <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure want to delete this file?')" data-toggle="tooltip" data-bs-toggle="tooltip" title="Permanently delete file from Telegram storage channel"><i data-lucide="trash-2" style="width: 15px; height: 15px;"></i> Delete</button>
                             </form>
                         </td>
                     </tr>
@@ -802,6 +804,13 @@
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof lucide !== 'undefined') {
             lucide.createIcons();
+        }
+        if (typeof $ !== 'undefined' && $.fn.tooltip) {
+            $('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').tooltip({
+                container: 'body',
+                trigger: 'hover',
+                boundary: 'window'
+            });
         }
         if (!localStorage.getItem('telegram_cloud_tour_completed')) {
             setTimeout(() => {
