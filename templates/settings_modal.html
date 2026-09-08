@@ -42,7 +42,7 @@
                 <div class="tab-content" id="settingsTabsContent">
                     <!-- Tab 1: Account & Security -->
                     <div class="tab-pane fade show active" id="tab-account" role="tabpanel">
-                        <div class="card bg-dark bg-opacity-50 border-secondary border-opacity-25 p-3 mb-4 rounded-3">
+                        <div class="card p-3 mb-4 rounded-3 border" style="background-color: var(--surface-elevated);">
                             <h6 class="fw-bold mb-2 text-primary">Account Details</h6>
                             <div class="row g-3 small">
                                 <div class="col-6">
@@ -60,7 +60,7 @@
                             </div>
                         </div>
 
-                        <div class="card bg-dark bg-opacity-50 border-secondary border-opacity-25 p-3 rounded-3">
+                        <div class="card p-3 rounded-3 border" style="background-color: var(--surface-elevated);">
                             <h6 class="fw-bold mb-3 text-warning">Change Password</h6>
                             <form id="changePasswordForm" onsubmit="handlePasswordChange(event)">
                                 <div class="mb-3">
@@ -84,14 +84,14 @@
                         <h6 class="fw-bold mb-3">Choose Appearance Theme</h6>
                         <div class="row g-3">
                             <div class="col-6">
-                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('dark')" style="cursor: pointer;">
+                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('dark')" style="cursor: pointer; background-color: var(--surface-elevated);">
                                     <i data-lucide="moon" class="mx-auto mb-2 text-primary" style="width: 32px; height: 32px;"></i>
-                                    <span class="fw-bold small d-block">Dark Mode (Default)</span>
-                                    <small class="text-muted">Deep sleek glassmorphism</small>
+                                    <span class="fw-bold small d-block">Dark Mode</span>
+                                    <small class="text-muted">Deep sleek dashboard</small>
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('light')" style="cursor: pointer;">
+                                <div class="card p-3 border text-center cursor-pointer theme-select-card" onclick="setAppTheme('light')" style="cursor: pointer; background-color: var(--surface-elevated);">
                                     <i data-lucide="sun" class="mx-auto mb-2 text-warning" style="width: 32px; height: 32px;"></i>
                                     <span class="fw-bold small d-block">Light Mode</span>
                                     <small class="text-muted">Clean bright interface</small>
@@ -105,12 +105,12 @@
                     <div class="tab-pane fade" id="tab-codes" role="tabpanel">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <h6 class="fw-bold mb-0 text-warning"><i data-lucide="key-round" class="me-1"></i> Registration Verification Codes</h6>
-                            <button class="btn btn-sm btn-outline-light" onclick="refreshAdminCodes()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshAdminCodes()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
                         </div>
                         <p class="text-muted small">When users click "Send Code" during signup, their 6-digit access code appears here and in Telegram. Copy and share the code with the user to approve registration.</p>
 
                         <div class="table-responsive">
-                            <table class="table table-dark table-sm align-middle">
+                            <table class="table table-sm align-middle">
                                 <thead>
                                     <tr>
                                         <th>Username</th>
@@ -143,11 +143,11 @@
                     <div class="tab-pane fade" id="tab-users" role="tabpanel">
                         <div class="d-flex align-items-center justify-content-between mb-3">
                             <h6 class="fw-bold mb-0 text-info"><i data-lucide="users" class="me-1"></i> Registered Users Directory</h6>
-                            <button class="btn btn-sm btn-outline-light" onclick="refreshAdminUsers()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshAdminUsers()"><i data-lucide="refresh-cw" style="width: 14px;"></i> Refresh</button>
                         </div>
 
                         <div class="table-responsive">
-                            <table class="table table-dark table-sm align-middle">
+                            <table class="table table-sm align-middle">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
